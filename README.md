@@ -6,7 +6,7 @@ Title Screen
 
 MoonBunny it's a Rythm game about a BunnyBoy who flies inside rings on music based levels.
 
-The game is a python game, using pygame for basic game engine and Panda3D for graphics and state machine purposes. It was a academic project released on 2007 for "Computer Graphics Project" discipline of my UFRGS graduation, made by Félix Cardoso, Kao Félix and Márcio Zacarias. The project won the intern contest, granted us a brand new NVIDIA graphics card =)
+The game is a python game, using pygame for basic game engine and Panda3D for graphics and state machine purposes. It was a academic project released on 2007 for "Computer Graphics Project" discipline of my UFRGS graduation, made by <a href="http://www.ic.unicamp.br/~ra144644/index.html">Félix Cardoso</a>, <a href="https://github.com/kaofelix">Kao Félix</a> and Márcio Zacarias. The project won the intern contest and granted us a brand new NVIDIA graphics card =)
 
 <a href="http://www.inf.ufrgs.br/~kcfelix/moonbunny.html">Older MoonBunny Project Page</a>
 
