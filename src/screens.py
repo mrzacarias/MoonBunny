@@ -10,8 +10,20 @@ import parse
 import particle
 from utils import *
 
-babelfish_font = loader.loadFont('./fonts/hum.egg')
-menuSfx = loader.loadSfx('./sound/menu.wav')
+babelfish_font = None
+menuSfx = None
+
+def get_babelfish_font():
+    global babelfish_font
+    if babelfish_font is None:
+        babelfish_font = loader.loadFont('./fonts/hum.egg')
+    return babelfish_font
+
+def get_menu_sfx():
+    global menuSfx
+    if menuSfx is None:
+        menuSfx = loader.loadSfx('./sound/menu.wav')
+    return menuSfx
 
 class TitleScreen:
     def __init__(self):
@@ -28,10 +40,10 @@ class TitleScreen:
         self.title_img = OnscreenImage(image='./image/title.png', pos = (0.0, 1.0, 0.6), scale = self.TITLE_SCALE, parent=render2d)
         self.title_img.setTransparency(TransparencyAttrib.MAlpha)
         
-        texts = [OnscreenText(text='Start', scale=0.2, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1)),
-            OnscreenText(text='Training',  scale=0.2, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1)),
-            OnscreenText(text='Options',  scale=0.2, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1)),
-            OnscreenText(text='Exit',  scale=0.2, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))]
+        texts = [OnscreenText(text='Start', scale=0.2, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1)),
+            OnscreenText(text='Training',  scale=0.2, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1)),
+            OnscreenText(text='Options',  scale=0.2, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1)),
+            OnscreenText(text='Exit',  scale=0.2, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))]
         
         for i in range(len(texts)):
             node = aspect2d.attachNewNode("TextPos%d" % i)
@@ -59,7 +71,7 @@ class TitleScreen:
             
         
         for opt in self.options:            
-            opt['sel_interval'] = Parallel(LerpScaleInterval(opt["node"], duration=0.2, startScale=1.0, scale=1.4, blendType='easeOut'), SoundInterval(menuSfx))
+            opt['sel_interval'] = Parallel(LerpScaleInterval(opt["node"], duration=0.2, startScale=1.0, scale=1.4, blendType='easeOut'), SoundInterval(get_menu_sfx()))
             opt['des_interval'] = LerpScaleInterval(opt["node"], duration=0.2, startScale=1.4, scale=1.0, blendType='easeOut')
         
         self.curr_option = 0
@@ -100,7 +112,7 @@ class LevelSelectScreen:
         
         self.game_opts = game_opts
         
-        self.title = OnscreenText(text = 'Select Level', pos = (0.0, 0.7), scale = 0.3, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+        self.title = OnscreenText(text = 'Select Level', pos = (0.0, 0.7), scale = 0.3, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
         self.bg = OnscreenImage(image='./image/bg.png', pos = (0.0, -1.0, 0.0), parent=render2d)
         self.bg.setTransparency(TransparencyAttrib.MAlpha)
         
@@ -149,7 +161,7 @@ class LevelSelectScreen:
             changed = True
         
         if changed:
-            interval = Parallel(LerpPosInterval(self.item_list_node, duration=.2, startPos=VBase3(self.item_list_node.getX(),.0,.0), pos=VBase3(-self.ITEM_SPACING*self.curr_option,.0,.0)), SoundInterval(menuSfx))
+            interval = Parallel(LerpPosInterval(self.item_list_node, duration=.2, startPos=VBase3(self.item_list_node.getX(),.0,.0), pos=VBase3(-self.ITEM_SPACING*self.curr_option,.0,.0)), SoundInterval(get_menu_sfx()))
             interval.start()
             self.update()
     
@@ -201,27 +213,27 @@ class LevelSelectScreen:
             artist_str = "by %s" %  level_header["ARTIST"]
             
         
-        title_text = OnscreenText(text = title_str, pos = (0.0, 0.-0.3), scale = 0.2, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+        title_text = OnscreenText(text = title_str, pos = (0.0, 0.-0.3), scale = 0.2, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
         title_text.reparentTo(level_item)
         
         next_y = -0.50
         
         if artist_str:
             next_y -= 0.05
-            artist_text = OnscreenText(text = artist_str, pos = (0.0, 0.-0.4), scale = 0.15, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+            artist_text = OnscreenText(text = artist_str, pos = (0.0, 0.-0.4), scale = 0.15, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
             artist_text.reparentTo(level_item)
             
             
-        bpm_text = OnscreenText(text = "BPM %.2f" % level_header["BPM"], pos = (0.0, next_y), scale = 0.18, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+        bpm_text = OnscreenText(text = "BPM %.2f" % level_header["BPM"], pos = (0.0, next_y), scale = 0.18, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
         bpm_text.reparentTo(level_item)
         
         if self.game_opts.has_option('hiscores', level_name):
             his = self.game_opts.get('hiscores', level_name).split(',')            
             maxrank = OnscreenText(text = "max rank %s" % his[0].upper(), 
-                pos = (0.0, next_y-0.15), scale = 0.18, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+                pos = (0.0, next_y-0.15), scale = 0.18, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
                 
             hiscore = OnscreenText(text = "hiscore %s" % his[1], 
-                pos = (0.0, next_y-0.25), scale = 0.18, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+                pos = (0.0, next_y-0.25), scale = 0.18, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
 
             maxrank.reparentTo(level_item)
             hiscore.reparentTo(level_item)
@@ -233,12 +245,12 @@ class OptionsScreen:
         self.bg = OnscreenImage(image='./image/bg.png', pos = (0.0, -1.0, 0.0), parent=render2d)
         self.bg.setTransparency(TransparencyAttrib.MAlpha)
         
-        self.title = OnscreenText(text = 'Options', pos = (0.0, 0.7), scale = 0.3, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+        self.title = OnscreenText(text = 'Options', pos = (0.0, 0.7), scale = 0.3, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
 
-        self.option_title_txt = OnscreenText(text='Controller', scale=0.2, pos=(-1.0, 0.0), font=babelfish_font, align=TextNode.ALeft, fg=(1,1,1,1))
+        self.option_title_txt = OnscreenText(text='Controller', scale=0.2, pos=(-1.0, 0.0), font=get_babelfish_font(), align=TextNode.ALeft, fg=(1,1,1,1))
         
         self.option_value = options.get('game-opts', 'controller')
-        self.option_value_txt = OnscreenText(text=self.option_value, scale=0.2, pos=(.7, 0.0), font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+        self.option_value_txt = OnscreenText(text=self.option_value, scale=0.2, pos=(.7, 0.0), font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
     
         self.options = options
         self.curr_controller = 0
@@ -267,7 +279,7 @@ class OptionsScreen:
             
         self.option_value = self.controllers[self.curr_controller]
         self.option_value_txt.destroy()
-        self.option_value_txt = OnscreenText(text=self.option_value, scale=0.2, pos=(.7, 0.0), font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))
+        self.option_value_txt = OnscreenText(text=self.option_value, scale=0.2, pos=(.7, 0.0), font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))
     
     def clear(self):
         self.bg.destroy()
@@ -282,7 +294,7 @@ class ResultScreen:
     def __init__(self, rank, score, stats):        
         text_list = []
         
-        text_list.append(OnscreenText(text = 'Level Ended', pos = (0.0, 0.7), scale = 0.3, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1)))
+        text_list.append(OnscreenText(text = 'Level Ended', pos = (0.0, 0.7), scale = 0.3, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1)))
         
         judgements = ["PERFECT","GOOD","OK","BAD","MISS"]
         
@@ -290,18 +302,18 @@ class ResultScreen:
        
         text_n = "\n".join(["%d" % stats[j] for j in judgements])
         
-        text_list.append(OnscreenText(text = text_j, pos = (-1.2, 0.35), scale = 0.2, font=babelfish_font, align=TextNode.ALeft, fg=(1,1,1,1)))
-        text_list.append(OnscreenText(text = text_n, pos = (0.2, 0.35), scale = 0.2, font=babelfish_font, align=TextNode.ARight, fg=(1,1,1,1)))
-        text_list.append((OnscreenText(text = "RANK", pos = (0.85, 0.35), scale = 0.15, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))))
+        text_list.append(OnscreenText(text = text_j, pos = (-1.2, 0.35), scale = 0.2, font=get_babelfish_font(), align=TextNode.ALeft, fg=(1,1,1,1)))
+        text_list.append(OnscreenText(text = text_n, pos = (0.2, 0.35), scale = 0.2, font=get_babelfish_font(), align=TextNode.ARight, fg=(1,1,1,1)))
+        text_list.append((OnscreenText(text = "RANK", pos = (0.85, 0.35), scale = 0.15, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))))
         
         self.rank_image = OnscreenImage(image = "./image/rank_%s.png" % rank, pos = (0.7, 0.0, -0.2), 
                 scale = (256.0/base.win.getXSize()*0.8, 1.0, 256.0/base.win.getYSize()*0.8), parent=render2d)
         self.rank_image.setTransparency(TransparencyAttrib.MAlpha)
         
-        #text_list.append((OnscreenText(text = rank, pos = (0.75, -0.25), scale = 0.9, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))))
+        #text_list.append((OnscreenText(text = rank, pos = (0.75, -0.25), scale = 0.9, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))))
         
-        text_list.append((OnscreenText(text = 'SCORE   %d'%score, pos = (0.0, -0.7), scale = 0.2, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))))
-        text_list.append((OnscreenText(text = 'press "SPACE " to continue', pos = (0.0, -0.9), scale = 0.16, font=babelfish_font, align=TextNode.ACenter, fg=(1,1,1,1))))
+        text_list.append((OnscreenText(text = 'SCORE   %d'%score, pos = (0.0, -0.7), scale = 0.2, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))))
+        text_list.append((OnscreenText(text = 'press "SPACE " to continue', pos = (0.0, -0.9), scale = 0.16, font=get_babelfish_font(), align=TextNode.ACenter, fg=(1,1,1,1))))
         
         self.text_list = text_list
         

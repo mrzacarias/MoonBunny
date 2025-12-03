@@ -11,6 +11,6 @@ echo "Activating virtual environment..."
 source moonbunny_env/bin/activate
 
 echo "Launching game..."
-python main.py
+python src/main.py
 
 echo "Game ended."

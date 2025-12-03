@@ -10,13 +10,19 @@ from direct.interval.IntervalGlobal import *
 
 from utils import *
 
-babelfish_font = loader.loadFont('./fonts/hum.egg')
+babelfish_font = None
+
+def get_babelfish_font():
+    global babelfish_font
+    if babelfish_font is None:
+        babelfish_font = loader.loadFont('./fonts/hum.egg')
+    return babelfish_font
 
 class TitleMessage:
     def __init__(self, title, artist):
         text_node = TextNode('title_display')
         text_node.setAlign(TextNode.ACenter)
-        text_node.setFont(babelfish_font)
+        text_node.setFont(get_babelfish_font())
         text_node.setTextColor(1, 1, 0.16, .9)
         text_node.setShadow(0.05, 0.05)
         text_node.setShadowColor(0.05, 0, 0.43, .9)
@@ -29,7 +35,7 @@ class TitleMessage:
         
         text_node = TextNode('artist_display')
         text_node.setAlign(TextNode.ACenter)
-        text_node.setFont(babelfish_font)
+        text_node.setFont(get_babelfish_font())
         text_node.setTextColor(0.05, 0, 0.43, .9)
         text_node.setShadow(0.05, 0.05)
         text_node.setShadowColor(1, 1, 0.16, .9)
@@ -126,7 +132,7 @@ class ScoreDisplay:
         ## Score display
         text_node = TextNode('score_display')
         text_node.setAlign(TextNode.ACenter)
-        text_node.setFont(babelfish_font)
+        text_node.setFont(get_babelfish_font())
         text_node.setShadow(0.05, 0.05)
         text_node.setShadowColor(.0,.0,.0,.1)
         
@@ -164,7 +170,7 @@ class ScreenDecorationManager:
         ## Chain message
         text_node = TextNode('chain_msg')
         text_node.setAlign(TextNode.ACenter)
-        text_node.setFont(babelfish_font)
+        text_node.setFont(get_babelfish_font())
 
         text_node.setTextColor(1, 1, 0.16, .9)
         text_node.setShadow(0.05, 0.05)

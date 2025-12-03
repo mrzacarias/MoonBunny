@@ -15,9 +15,12 @@ import gui
 import parse
 import particle
 try:
-    import cwiid
+    import cwiid_compat as cwiid
 except ImportError:
-    print("no cwiid =/")
+    try:
+        import cwiid
+    except ImportError:
+        print("no cwiid =/")
 
 from utils import *
 

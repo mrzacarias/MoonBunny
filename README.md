@@ -39,20 +39,50 @@ This classic game has been updated to work with modern Python 3 and Panda3D. To 
    pip install -r requirements.txt
    
    # Run the game
-   python main.py
+   python src/main.py
    ```
 
+### Technical Notes
+
+**Wiimote Compatibility Layer:**
+The game includes a custom compatibility wrapper (`cwiid_compat.py`) that bridges the original `cwiid` API with the modern `wiiuse` library. This allows the 2007-era Wiimote code to work seamlessly with current systems while maintaining all original functionality.
+
+**Dependencies:**
+- **Panda3D 1.10+**: 3D graphics and game engine
+- **pygame 2.0+**: Input handling and audio
+- **wiiuse 0.12+**: Wiimote support (automatically installed)
+
 ### Controls
+
+#### Keyboard (Default)
 - **Arrow Keys**: Navigate menus and control the bunny
 - **Space**: Confirm selection
 - **Escape**: Back/Cancel
 
+#### Wiimote Support 🎮
+MoonBunny now supports Nintendo Wiimote controllers! The game includes:
+- **Motion controls**: Use the Wiimote's accelerometer for character movement
+- **Button controls**: A/B buttons for actions, D-pad for navigation
+- **Nunchuk support**: Enhanced control with the Nunchuk attachment
+- **IR pointer**: Point-and-click interface support
+
+**Wiimote Setup:**
+1. Enable Bluetooth on your computer
+2. Put your Wiimote in pairing mode (press 1+2 buttons simultaneously)
+3. Pair the Wiimote through your system's Bluetooth settings
+4. Launch MoonBunny - it will automatically detect connected Wiimotes
+5. Select "Wiimote" in the game's control options
+
+**Note**: Wiimote support uses the modern `wiiuse` library with a compatibility layer for the original `cwiid` interface.
+
 ### Features
 - Multiple levels with different music tracks
 - Training mode
-- Various control options (Keyboard, Mouse, Joystick)
+- Various control options (Keyboard, Mouse, Joystick, **Wiimote**)
+- Motion-based gameplay with accelerometer support
 - Particle effects and 3D graphics
 - Score ranking system
+- Alternative interaction methods (research project feature)
 
 <a href="http://www.inf.ufrgs.br/~kcfelix/moonbunny.html">Older MoonBunny Project Page</a>
 

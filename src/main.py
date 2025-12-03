@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+# Change to parent directory so relative paths work
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import sys
 import time
 import math
@@ -9,10 +13,17 @@ b_cwiid = True
 wm_addr = '00:1E:35:7B:96:5D'
 
 try:
-    import cwiid
+    import cwiid_compat as cwiid
+    b_cwiid = True
+    print("Wiimote support enabled via wiiuse")
 except ImportError:
-    print("no cwiid =/")
-    b_cwiid = False
+    try:
+        import cwiid
+        b_cwiid = True
+        print("Wiimote support enabled via cwiid")
+    except ImportError:
+        print("no cwiid =/")
+        b_cwiid = False
 
 for arg in sys.argv:
     try:
@@ -25,6 +36,9 @@ for arg in sys.argv:
     
 from panda3d.core import *
 loadPrcFile("./config.prc")
+
+# Add the current directory to Panda3D's model path so it can find assets
+getModelPath().appendDirectory(".")
 
 import direct.directbase.DirectStart
 from direct.task import Task
