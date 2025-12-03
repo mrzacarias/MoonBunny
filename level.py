@@ -8,7 +8,7 @@ from direct.task import Task
 from direct.actor import Actor
 from direct.showbase import DirectObject
 from direct.gui.OnscreenText import OnscreenText
-from pandac.PandaModules import *
+from panda3d.core import *
 from direct.interval.IntervalGlobal import *
 
 import gui
@@ -17,7 +17,7 @@ import particle
 try:
     import cwiid
 except ImportError:
-    print "no cwiid =/"
+    print("no cwiid =/")
 
 from utils import *
 
@@ -84,7 +84,7 @@ class Level(DirectObject.DirectObject):
                     else:
                         self.bool_nun_error = False
             if self.bool_nun_error:
-                print "No Nunchuk conected, using standard Wiimote\n"
+                print("No Nunchuk conected, using standard Wiimote\n")
 
             self.cal = self.wm.get_acc_cal(cwiid.EXT_NONE)
 
@@ -92,7 +92,7 @@ class Level(DirectObject.DirectObject):
             self.x_old = 300
             self.y_old = 213
             
-            base.win.movePointer(0, self.x_old, self.y_old)
+            base.win.movePointer(0, int(self.x_old), int(self.y_old))
             self.mvs = ListMovements()
 
     def setup(self):
@@ -141,7 +141,7 @@ class Level(DirectObject.DirectObject):
             1.0 : "MISS",
         }
         
-        self.score_list = self.precision_judge.keys()[:]
+        self.score_list = list(self.precision_judge.keys())
         self.score_list.sort()
         
         self.judgement_stats = {
@@ -240,13 +240,13 @@ class Level(DirectObject.DirectObject):
         # Create Ambient Light
         ambientLight = AmbientLight( 'ambientLight' )
         ambientLight.setColor( Vec4( 0.4, 0.4, 0.4, 1 ) )
-        ambientLightNP = render.attachNewNode( ambientLight.upcastToPandaNode() )
+        ambientLightNP = render.attachNewNode( ambientLight )
         self.rootNode.setLight(ambientLightNP)
 
         # Directional light 01
         directionalLight = DirectionalLight( "directionalLight" )
         directionalLight.setColor( Vec4( 1.1, 1.1, 0.9, 1 ) )
-        directionalLightNP = self.rootNode.attachNewNode( directionalLight.upcastToPandaNode() )
+        directionalLightNP = self.rootNode.attachNewNode( directionalLight )
         # This light is facing backwards, towards the camera.
         directionalLightNP.setHpr(180, -20, 0)
         self.rootNode.setLight(directionalLightNP)
@@ -254,7 +254,7 @@ class Level(DirectObject.DirectObject):
         # Directional light 02
         directionalLight = DirectionalLight( "directionalLight" )
         directionalLight.setColor( Vec4( 0.6, 0.6, 0.6, 1 ) )
-        directionalLightNP = self.rootNode.attachNewNode( directionalLight.upcastToPandaNode() )
+        directionalLightNP = self.rootNode.attachNewNode( directionalLight )
         # This light is facing forwards, away from the camera.
         directionalLightNP.setHpr(0, -20, 0)
         self.rootNode.setLight(directionalLightNP)
@@ -334,7 +334,7 @@ class Level(DirectObject.DirectObject):
         
         ring = self.ring_list[0]["node"]
         
-        self.ring_radius = abs(ring.node().getBounds().getPoint(0).getZ() - ring.node().getBounds().getPoint(1).getZ())/2
+        self.ring_radius = ring.node().getBounds().getRadius()
                 
         self.n_rings = len(self.ring_list)
     
@@ -351,11 +351,11 @@ class Level(DirectObject.DirectObject):
             taskMgr.add(getattr(self, task), task)
     def calculate_rank(self, stats, n):
         rates = {
-            "PERFECT": float(stats['PERFECT'] / float(n)),
-            "GOOD": float(stats['GOOD'] / float(n)),
-            "OK" : float(stats['OK'] / float(n)),
-            "BAD" : float(stats['BAD'] / float(n)),
-            "MISS": float(stats['MISS'] / float(n))
+            "PERFECT": float(stats['PERFECT']) / float(n),
+            "GOOD": float(stats['GOOD']) / float(n),
+            "OK" : float(stats['OK']) / float(n),
+            "BAD" : float(stats['BAD']) / float(n),
+            "MISS": float(stats['MISS']) / float(n)
         }
         
         if( rates['MISS'] <= 0 and rates['BAD'] <= 0.1 and rates['PERFECT'] >=0.5):
@@ -524,7 +524,7 @@ class Level(DirectObject.DirectObject):
                 move_y = False
                 
         if not move_x and not move_y:
-            base.win.movePointer(0, self.x_old, self.y_old)
+            base.win.movePointer(0, int(self.x_old), int(self.y_old))
 
     #######################################################
     # ROTINAS PARA CONTROLE COM WIIMOTE USANDO APENAS OS ACELEROMETROS #
@@ -665,7 +665,7 @@ class Level(DirectObject.DirectObject):
                 move_y = False
                 
         if not move_x and not move_y:
-            base.win.movePointer(0, self.x_old, self.y_old)
+            base.win.movePointer(0, int(self.x_old), int(self.y_old))
         
         self.bunnyActor.setR(-(90 - self.angle_R))
         self.bunnyActor.setP(90 - self.angle_P)
@@ -783,7 +783,7 @@ class Level(DirectObject.DirectObject):
                 move_y = False
                 
         if not move_x and not move_y:
-            base.win.movePointer(0, self.x_old, self.y_old)
+            base.win.movePointer(0, int(self.x_old), int(self.y_old))
         
         self.bunnyActor.setR(-(90 - self.angle_R))
         self.bunnyActor.setP(90 - self.angle_P)
@@ -793,7 +793,7 @@ class Level(DirectObject.DirectObject):
     def ctask_terrainPatch(self, task):
         closest_patch = self.terrain_patch_list[0]
         
-        if camera.getPos().getY() > closest_patch.node().getBounds().getPoint(2).getY():
+        if camera.getPos().getY() > closest_patch.node().getBounds().getCenter().getY() + closest_patch.node().getBounds().getRadius():
             last_patch = self.terrain_patch_list[-1]
             closest_patch.setY(last_patch.getPos().getY() + self.terrain_patch_size -0.1)
             
@@ -939,7 +939,7 @@ class ButtonMap:
         if self.mode == 'joy':
             pygame.init()
             pygame.joystick.init()
-            print pygame.joystick
+            print(pygame.joystick)
         
             try:
                 if self.mode == "joy":
@@ -947,8 +947,8 @@ class ButtonMap:
                     self.joy.init()
                 
                     taskMgr.add(self.ctask_JoyEvent, "joy-event")
-            except pygame.error, e:
-                print e
+            except pygame.error as e:
+                print(e)
                 self.mode = 'key'
         
         elif self.wii and self.mode == 'wiimote':

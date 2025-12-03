@@ -4,7 +4,8 @@
 from direct.particles.ParticleEffect import ParticleEffect
 from direct.particles.Particles import Particles
 from direct.particles.ForceGroup import ForceGroup
-from pandac.PandaModules import *
+from panda3d.core import *
+from panda3d.physics import BaseParticleRenderer, BaseParticleEmitter
 from direct.interval.MetaInterval import Sequence
 from direct.interval.FunctionInterval import Func
 from direct.particles.ParticleEffect import ParticleEffect

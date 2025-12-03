@@ -4,7 +4,7 @@
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.interval.IntervalGlobal import *
-from pandac.PandaModules import *
+from panda3d.core import *
 
 import parse
 import particle
@@ -191,13 +191,13 @@ class LevelSelectScreen:
         level_img.setTransparency(TransparencyAttrib.MAlpha)
         level_img.reparentTo(level_item)
         
-        if level_header.has_key("TITLE"):
+        if "TITLE" in level_header:
             title_str = "%s" % level_header["TITLE"]
         else:
             title_str = "%s" % level_header["NAME"]
         
         artist_str = ""
-        if level_header.has_key("ARTIST"):
+        if "ARTIST" in level_header:
             artist_str = "by %s" %  level_header["ARTIST"]
             
         

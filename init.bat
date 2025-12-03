@@ -1,1 +1,0 @@
-ppython main.py

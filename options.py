@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 
 NAV_CMDS = ['nav-up', 'nav-down', 'nav-left', 'nav-right', 'nav-confirm', 'nav-back']
 ACT_CMDS = ['aX', 'aY', 'A', 'B', 'C', 'D']
@@ -40,11 +40,11 @@ DEFAULTS = {
         }
 }
 
-class MoonBunnyOptions(SafeConfigParser):
+class MoonBunnyOptions(ConfigParser):
     def __init__(self):
-        SafeConfigParser.__init__(self)
+        ConfigParser.__init__(self)
         try:
-            f = file('options.cfg')
+            f = open('options.cfg')
             self.read('options.cfg')
         except IOError:
             for (k, v) in DEFAULTS.items():
@@ -52,9 +52,9 @@ class MoonBunnyOptions(SafeConfigParser):
                 for (k2, v2) in v.items():
                     self.set(k, str(k2), str(v2))
              
-            f = file('options.cfg', 'w')
+            f = open('options.cfg', 'w')
             self.write(f)
             
     def save(self):
-        f = file('options.cfg', 'w')
+        f = open('options.cfg', 'w')
         self.write(f)

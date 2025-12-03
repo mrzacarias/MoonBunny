@@ -11,19 +11,19 @@ wm_addr = '00:1E:35:7B:96:5D'
 try:
     import cwiid
 except ImportError:
-    print "no cwiid =/"
+    print("no cwiid =/")
     b_cwiid = False
 
 for arg in sys.argv:
     try:
         bool_teste = False
         arg_splitted = arg.split('=')
-        if arg_splitted[0] == "-w" or arq_splitted[0] == "--wiimote-address":
+        if arg_splitted[0] == "-w" or arg_splitted[0] == "--wiimote-address":
             wm_addr = arg_splitted[1]
     except:
         bool_teste = False
     
-from pandac.PandaModules import *
+from panda3d.core import *
 loadPrcFile("./config.prc")
 
 import direct.directbase.DirectStart
@@ -36,7 +36,7 @@ from direct.fsm import FSM
 from direct.interval.IntervalGlobal import *
 
 #tirando o cursor do mouse
-from pandac.PandaModules import WindowProperties
+from panda3d.core import WindowProperties
 props = WindowProperties()
 props.setCursorHidden(True) 
 base.win.requestProperties(props)
@@ -280,11 +280,11 @@ class Game(FSM.FSM):
 
     def calculate_rank(self, stats, n):
         rates = {
-            "PERFECT": float(stats['PERFECT'] / float(n)),
-            "GOOD": float(stats['GOOD'] / float(n)),
-            "OK" : float(stats['OK'] / float(n)),
-            "BAD" : float(stats['BAD'] / float(n)),
-            "MISS": float(stats['MISS'] / float(n))
+            "PERFECT": float(stats['PERFECT']) / float(n),
+            "GOOD": float(stats['GOOD']) / float(n),
+            "OK" : float(stats['OK']) / float(n),
+            "BAD" : float(stats['BAD']) / float(n),
+            "MISS": float(stats['MISS']) / float(n)
         }
         
         if(rates['PERFECT'] ==1):
@@ -411,7 +411,7 @@ class JoystickManager:
         pygame.joystick.init()
         taskMgr.add(self.ctask_CheckEvents, "pygame-event")
         
-        print "Joysticks available:", pygame.joystick.get_count()
+        print("Joysticks available:", pygame.joystick.get_count())
         
         self.joy_list = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
         
@@ -450,11 +450,11 @@ if __name__ == '__main__':
         j.init()
         control.JoyNavMapper(j).activate()
         
-    except pygame.error, e:
-        print e
+    except pygame.error as e:
+        print(e)
     
     game = Game()
     Controller(game)
     
-    run()
+    base.run()
     

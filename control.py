@@ -8,7 +8,7 @@ if __name__=='__main__':
 
 from direct.task import Task
 from direct.actor import Actor
-from pandac.PandaModules import *
+from panda3d.core import *
 from direct.showbase import DirectObject
 
 import pygame
@@ -79,4 +79,4 @@ if __name__=='__main__':
 
     KeyNavMapper()
     EvtPrinter()
-    run()
+    base.run()
