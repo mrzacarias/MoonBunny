@@ -48,13 +48,18 @@ class TitleMessage:
         self.title_display.node().setText(title)
         self.artist_display.node().setText(artist)
 
-        Sequence(Parallel(LerpFunc(self.title_display.setAlphaScale, fromData=.0, toData=1, duration=.5),
+        # Store the animation sequence so we can stop it later
+        self.animation_sequence = Sequence(Parallel(LerpFunc(self.title_display.setAlphaScale, fromData=.0, toData=1, duration=.5),
                                       LerpFunc(self.artist_display.setAlphaScale, fromData=.0, toData=1, duration=.5)),
                         Wait(1.0),
                         Parallel(LerpFunc(self.title_display.setAlphaScale, fromData=1, toData=.0, duration=.5),
-                                      LerpFunc(self.artist_display.setAlphaScale, fromData=1, toData=.0, duration=.5))).start()
+                                      LerpFunc(self.artist_display.setAlphaScale, fromData=1, toData=.0, duration=.5)))
+        self.animation_sequence.start()
             
     def clear(self):
+        # Stop the animation sequence before removing nodes to prevent crash
+        if self.animation_sequence and self.animation_sequence.isPlaying():
+            self.animation_sequence.finish()
         self.title_display.removeNode()
         self.artist_display.removeNode()
         
