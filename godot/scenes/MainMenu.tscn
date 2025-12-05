@@ -1,0 +1,90 @@
+[gd_scene load_steps=7 format=3 uid="uid://btf42fefqdmxw"]
+
+[ext_resource type="Script" uid="uid://csxcnsbahi1ss" path="res://scripts/MainMenu.gd" id="1_mainmenu"]
+[ext_resource type="Texture2D" uid="uid://bcurgxptbywii" path="res://assets/textures/bg.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://cfak7o3pyp18k" path="res://assets/textures/title.png" id="3_title"]
+[ext_resource type="Texture2D" uid="uid://j1q770gurgwb" path="res://assets/textures/star_particle.png" id="4_star"]
+[ext_resource type="FontFile" uid="uid://bq7yrq67xeu18" path="res://assets/fonts/HUM521BC.TTF" id="5_font"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars"]
+emission_shape = 3
+emission_box_extents = Vector3(1, 1, 1)
+direction = Vector3(0, -1, 0)
+initial_velocity_min = 30.0
+initial_velocity_max = 60.0
+gravity = Vector3(0, 40, 0)
+scale_min = 0.3
+scale_max = 0.8
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mainmenu")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.75
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -714.0
+offset_right = -3.0
+texture = ExtResource("2_bg")
+stretch_mode = 6
+
+[node name="StarParticles" type="GPUParticles2D" parent="."]
+z_index = 1
+emitting = false
+amount = 80
+texture = ExtResource("4_star")
+lifetime = 20.0
+process_material = SubResource("ParticleProcessMaterial_stars")
+
+[node name="TitleImage" type="TextureRect" parent="."]
+z_index = 2
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -408.0
+offset_top = -418.0
+offset_right = 430.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_title")
+stretch_mode = 4
+
+[node name="MenuLabels" type="Control" parent="."]
+z_index = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CopyrightLabel" type="Label" parent="."]
+z_index = 2
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -50.0
+offset_right = 200.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_fonts/font = ExtResource("5_font")
+theme_override_font_sizes/font_size = 24
+text = "MoonBunny (c) TrombaSoft 2007"
+horizontal_alignment = 1

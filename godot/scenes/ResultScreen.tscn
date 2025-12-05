@@ -1,0 +1,127 @@
+[gd_scene load_steps=2 format=3 uid="uid://bk8xkaxyqhqhl"]
+
+[ext_resource type="Script" uid="uid://dqoskdu3d1s54" path="res://scripts/ResultScreen.gd" id="1_result"]
+
+[node name="ResultScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_result")
+
+[node name="Background" type="ColorRect" parent="."]
+z_index = -1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -353.5
+offset_top = -462.5
+offset_right = 321.5
+offset_bottom = -314.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 100
+text = "Level Ended"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="JudgementNames" type="Label" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 215.5
+offset_right = 385.0
+offset_bottom = 722.5
+theme_override_font_sizes/font_size = 72
+text = "PERFECT
+GOOD
+OK
+BAD
+MISS"
+vertical_alignment = 1
+
+[node name="JudgementCounts" type="Label" parent="."]
+layout_mode = 0
+offset_left = 537.0
+offset_top = 215.5
+offset_right = 578.0
+offset_bottom = 722.5
+theme_override_font_sizes/font_size = 72
+text = "0
+0
+0
+0
+0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="RankLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 792.0
+offset_top = 220.0
+offset_right = 1242.0
+offset_bottom = 294.0
+theme_override_font_sizes/font_size = 54
+text = "RANK"
+horizontal_alignment = 1
+
+[node name="RankImage" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(337, 337)
+layout_mode = 0
+offset_left = 848.0
+offset_top = 329.0
+offset_right = 1185.0
+offset_bottom = 666.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 4
+
+[node name="ScoreLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -337.5
+offset_top = 281.0
+offset_right = 337.5
+offset_bottom = 380.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 72
+text = "SCORE   0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContinueLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -338.5
+offset_top = 392.75
+offset_right = 338.5
+offset_bottom = 466.75
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
+text = "press \"SPACE\" to continue"
+horizontal_alignment = 1
+vertical_alignment = 1

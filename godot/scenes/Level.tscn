@@ -1,0 +1,53 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/Level.gd" id="1_level"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+sky_rotation = Vector3(0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.15
+fog_enabled = true
+fog_light_color = Color(0.25, 0.8, 0.97, 1)
+fog_light_energy = 0.8
+fog_sun_scatter = 0.05
+fog_density = 0.002
+fog_aerial_perspective = 0.05
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+
+[node name="Level" type="Node3D"]
+script = ExtResource("1_level")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, -2.5, 0.3)
+fov = 75.0
+far = 500000.0
+
+[node name="Environment" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 10, 5)
+light_energy = 0.6
+light_color = Color(1.1, 1.1, 0.9, 1)
+shadow_enabled = true
+shadow_bias = 0.1
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(0.707107, -0.5, -0.5, 0, 0.707107, -0.707107, 0.707107, 0.5, 0.5, 0, 10, -5)
+light_energy = 0.4
+light_color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="BunnyActor" type="Node3D" parent="."]
+transform = Transform3D(0.143, 0, 0, 0, 0.143, 0, 0, 0, 0.143, 0, 0, 0.3)
+
+[node name="Rings" type="Node3D" parent="."]
+
+[node name="Terrain" type="Node3D" parent="."]
+
+[node name="Skybox" type="Node3D" parent="."]
+
+[node name="Audio" type="Node3D" parent="."]
+
+[node name="GUI" type="Node3D" parent="."]

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dou6jrr71fhjf"]
+
+[ext_resource type="Script" uid="uid://bq86keopiw3o0" path="res://scripts/TextureDebugger.gd" id="1_hbmhb"]
+
+[node name="TextureText" type="Node3D"]
+script = ExtResource("1_hbmhb")
