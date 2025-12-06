@@ -110,15 +110,15 @@ func load_available_levels():
 		
 		while file_name != "":
 			if dir.current_is_dir():
-				# Check if this directory has a header.lvl file
+				# Check if this directory has a header.lvl file and exclude training
 				var header_path = levels_dir + file_name + "/header.lvl"
-				if FileAccess.file_exists(header_path):
+				if FileAccess.file_exists(header_path) and file_name != "training":
 					available_levels.append(file_name)
 			file_name = dir.get_next()
 	
 	# If no levels found, add some default ones for testing
 	if available_levels.is_empty():
-		available_levels = ["rain_of_love", "7stars", "green_hill_zone"]
+		available_levels = ["7stars", "green_hill_zone", "bang_bang"]
 
 func setup_level_items():
 	"""Create level items exactly like original MoonBunny"""

@@ -4,6 +4,7 @@ extends Control
 
 # Game states (simplified from GameStateMachine)
 enum GameState {
+	SPLASH,
 	TITLE,
 	LEVEL_SELECT,
 	LEVEL,
@@ -12,6 +13,7 @@ enum GameState {
 }
 
 # UI References
+@onready var splash_screen = $UI/SplashScreen
 @onready var main_menu = $UI/MainMenu
 @onready var level_select = $UI/LevelSelect
 @onready var gameplay_ui = $UI/GameplayUI
@@ -32,7 +34,7 @@ var current_level: Level = null
 var theme_music_playing = false
 
 # Game state management
-var current_state: GameState = GameState.TITLE
+var current_state: GameState = GameState.SPLASH
 var previous_state: GameState
 
 # Level data (moved from GameStateMachine)
@@ -56,8 +58,11 @@ func _ready():
 	# Connect ResultScreen signal
 	result_screen.return_to_menu.connect(_on_result_screen_return_to_menu)
 	
+	# Connect SplashScreen signal
+	splash_screen.splash_finished.connect(_on_splash_finished)
+	
 	# Setup initial state
-	change_state(GameState.TITLE)
+	change_state(GameState.SPLASH)
 	
 	# Setup input handling
 	setup_input()
@@ -90,6 +95,8 @@ func change_state(new_state: GameState):
 	
 	# Show appropriate UI for new state
 	match new_state:
+		GameState.SPLASH:
+			show_splash_screen()
 		GameState.TITLE:
 			show_title_screen()
 		GameState.LEVEL_SELECT:
@@ -117,11 +124,18 @@ func handle_nav_back():
 
 func hide_all_ui():
 	"""Hide all UI screens"""
+	splash_screen.visible = false
 	main_menu.visible = false
 	level_select.visible = false
 	gameplay_ui.visible = false
 	result_screen.visible = false
 	black_screen_overlay.visible = false
+
+func show_splash_screen():
+	"""Show splash screen"""
+	splash_screen.visible = true
+	background_color.visible = false  # Hide background during splash
+	stop_theme_music()  # Make sure no music is playing during splash
 
 func show_title_screen():
 	"""Show title screen and start theme music"""
@@ -263,7 +277,7 @@ func on_menu_start():
 func on_menu_training():
 	"""Handle training button from main menu"""
 	# Set training level and start
-	selected_level = "rain_of_love"
+	selected_level = "training"
 	selected_difficulty = "Normal"
 	is_training = true
 	change_state(GameState.TRAINING)
@@ -292,6 +306,11 @@ func _on_result_screen_return_to_menu():
 	"""Handle ResultScreen signal to return to main menu"""
 	print("🏠 Main: ResultScreen requested return to menu")
 	on_back_to_menu()
+
+func _on_splash_finished():
+	"""Handle splash screen completion"""
+	print("🏠 Main: Splash screen finished, transitioning to title")
+	change_state(GameState.TITLE)
 
 func show_empty_results():
 	"""Show empty results for cancelled levels"""

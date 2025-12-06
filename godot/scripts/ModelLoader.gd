@@ -223,8 +223,9 @@ static func get_terrain_texture_for_type(terrain_type: int) -> String:
 	
 	return terrain_textures.get(terrain_type, "res://assets/models/grass.jpg")
 
-static func load_mesh_only(model_path: String, texture_path: String = "") -> MeshInstance3D:
-	"""Load a model and return only the MeshInstance3D (for skybox, terrain, etc.)"""
+static func load_mesh_only(model_path: String, texture_path: String = "") -> Node3D:
+	"""Load a model and return the complete scene (for skybox, terrain, etc.)
+	This preserves all meshes in GLB files instead of just the first one."""
 	
 	# Try .glb first
 	var glb_path = model_path
@@ -235,17 +236,11 @@ static func load_mesh_only(model_path: String, texture_path: String = "") -> Mes
 		var glb_scene = load(glb_path)
 		if glb_scene and glb_scene is PackedScene:
 			var scene_instance = glb_scene.instantiate()
-			var found_mesh = find_mesh_instance(scene_instance)
 			
-			if found_mesh:
-				# Create a new mesh instance with copied data
-				var new_mesh_instance = MeshInstance3D.new()
-				new_mesh_instance.mesh = found_mesh.mesh
-				new_mesh_instance.material_override = found_mesh.material_override
-				
-				# Clean up the temporary scene
-				scene_instance.queue_free()
-				return new_mesh_instance
+			# Return the complete scene to preserve all meshes
+			# This fixes the issue where floating mountains were being lost
+			# because only the first mesh was being extracted
+			return scene_instance
 	
 	# Fallback to .obj file
 	var obj_path = model_path.get_basename() + ".obj"

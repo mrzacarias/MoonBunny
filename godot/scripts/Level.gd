@@ -259,25 +259,38 @@ func setup_skybox():
 	# Try multiple approaches for skybox
 	
 	# Method 1: Try to load the original skybox GLB model
-	skybox = ModelLoader.load_mesh_only("res://assets/models/skybox")
-	if skybox:
-		skybox.name = "SkyboxMesh"
+	var skybox_scene = ModelLoader.load_mesh_only("res://assets/models/skybox")
+	if skybox_scene:
+		# Find the main mesh instance in the skybox scene
+		skybox = ModelLoader.find_mesh_instance(skybox_scene)
+		if skybox:
+			# Remove from current parent before adding to new parent
+			if skybox.get_parent():
+				skybox.get_parent().remove_child(skybox)
+			
+			# Clear the owner to avoid inconsistency warnings
+			skybox.owner = null
+			
+			skybox.name = "SkyboxMesh"
+			
+			# Check if the skybox model has materials
+			var has_materials = false
+			if skybox.material_override:
+				has_materials = true
+			elif skybox.mesh:
+				# Check mesh surface materials
+				for i in range(skybox.mesh.get_surface_count()):
+					var surface_material = skybox.mesh.surface_get_material(i)
+					if surface_material:
+						has_materials = true
+						break
+			
+			if not has_materials:
+				var sky_material = ModelLoader.create_skybox_material()
+				skybox.material_override = sky_material
 		
-		# Check if the skybox model has materials
-		var has_materials = false
-		if skybox.material_override:
-			has_materials = true
-		elif skybox.mesh:
-			# Check mesh surface materials
-			for i in range(skybox.mesh.get_surface_count()):
-				var surface_material = skybox.mesh.surface_get_material(i)
-				if surface_material:
-					has_materials = true
-					break
-		
-		if not has_materials:
-			var sky_material = ModelLoader.create_skybox_material()
-			skybox.material_override = sky_material
+		# Clean up the temporary scene since we extracted the mesh
+		skybox_scene.queue_free()
 	else:
 		# Method 2: Create a large inverted cube (better UV mapping than sphere)
 		skybox = MeshInstance3D.new()
@@ -405,18 +418,20 @@ func setup_terrain():
 		var terrain_index = (i % 8) + 1
 		
 		# Use ModelLoader to load terrain (tries GLB first, then OBJ fallback)
-		var terrain_instance = ModelLoader.load_mesh_only("res://assets/models/terrain_%d" % terrain_index)
+		var terrain_scene = ModelLoader.load_mesh_only("res://assets/models/terrain_%d" % terrain_index)
 		
-		if terrain_instance:
+		if terrain_scene:
+			# For GLB files, we want to preserve all meshes, so add the complete scene
+			# This ensures floating mountains and other terrain details are included
 			
 			# Position terrain to start before player position and extend forward
-			terrain_instance.position = Vector3(0, terrain_start_offset + terrain_patch_size * i - 0.1, TERRAIN_Z)
+			terrain_scene.position = Vector3(0, terrain_start_offset + terrain_patch_size * i - 0.1, TERRAIN_Z)
 			
 			# Rotate terrain to be horizontal
-			terrain_instance.rotation_degrees = Vector3(-90, 0, 180)
+			terrain_scene.rotation_degrees = Vector3(-90, 0, 180)
 			
-			terrain_container.add_child(terrain_instance)
-			terrain_patch_list.append(terrain_instance)
+			terrain_container.add_child(terrain_scene)
+			terrain_patch_list.append(terrain_scene)
 		else:
 			# Use fallback if loading failed
 			create_fallback_terrain(i, terrain_patch_size, TERRAIN_Z, terrain_start_offset)

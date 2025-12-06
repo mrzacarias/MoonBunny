@@ -1,11 +1,12 @@
-[gd_scene load_steps=8 format=3 uid="uid://bfgxj8xyqhqhk"]
+[gd_scene load_steps=9 format=3 uid="uid://bfgxj8xyqhqhk"]
 
 [ext_resource type="Script" uid="uid://d3rqp5yw8yxgt" path="res://scripts/Main.gd" id="1_main"]
-[ext_resource type="PackedScene" path="res://scenes/MainMenu.tscn" id="2_mainmenu"]
-[ext_resource type="PackedScene" path="res://scenes/LevelSelect.tscn" id="3_levelselect"]
-[ext_resource type="PackedScene" path="res://scenes/GameplayUI.tscn" id="4_gameplayui"]
-[ext_resource type="PackedScene" uid="uid://bk8xj9xyqhqhl" path="res://scenes/ResultScreen.tscn" id="5_resultscreen"]
-[ext_resource type="AudioStream" uid="uid://514el7jwwhvg" path="res://assets/sounds/always.wav" id="6_menu_music"]
+[ext_resource type="PackedScene" uid="uid://cbs2xvasrroya" path="res://scenes/SplashScreen.tscn" id="2_splashscreen"]
+[ext_resource type="PackedScene" path="res://scenes/MainMenu.tscn" id="3_mainmenu"]
+[ext_resource type="PackedScene" path="res://scenes/LevelSelect.tscn" id="4_levelselect"]
+[ext_resource type="PackedScene" path="res://scenes/GameplayUI.tscn" id="5_gameplayui"]
+[ext_resource type="PackedScene" uid="uid://bk8xj9xyqhqhl" path="res://scenes/ResultScreen.tscn" id="6_resultscreen"]
+[ext_resource type="AudioStream" uid="uid://514el7jwwhvg" path="res://assets/sounds/always.wav" id="7_menu_music"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -34,17 +35,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MainMenu" parent="UI" instance=ExtResource("2_mainmenu")]
+[node name="SplashScreen" parent="UI" instance=ExtResource("2_splashscreen")]
+visible = false
 layout_mode = 1
 
-[node name="LevelSelect" parent="UI" instance=ExtResource("3_levelselect")]
+[node name="MainMenu" parent="UI" instance=ExtResource("3_mainmenu")]
+visible = false
 layout_mode = 1
 
-
-[node name="GameplayUI" parent="UI" instance=ExtResource("4_gameplayui")]
+[node name="LevelSelect" parent="UI" instance=ExtResource("4_levelselect")]
+visible = false
 layout_mode = 1
 
-[node name="ResultScreen" parent="UI" instance=ExtResource("5_resultscreen")]
+[node name="GameplayUI" parent="UI" instance=ExtResource("5_gameplayui")]
+visible = false
+layout_mode = 1
+
+[node name="ResultScreen" parent="UI" instance=ExtResource("6_resultscreen")]
+visible = false
 layout_mode = 1
 
 [node name="BlackScreenOverlay" type="ColorRect" parent="UI"]
@@ -61,5 +69,4 @@ visible = false
 [node name="Level" type="Node3D" parent="."]
 
 [node name="MenuMusic" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("6_menu_music")
-autoplay = true
+stream = ExtResource("7_menu_music")

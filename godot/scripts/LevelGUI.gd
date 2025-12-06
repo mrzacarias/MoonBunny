@@ -19,6 +19,14 @@ class ButtonViewer extends Control:
 	# Button textures (like original tex_buttons)
 	var button_textures = {}
 	
+	# Button colors matching ring colors from ModelLoader
+	var button_colors = {
+		"A": Color(0.3, 0.5, 1.0, 1.0),  # Bright blue
+		"B": Color(1.0, 0.2, 0.2, 1.0),  # Bright red
+		"C": Color(1.0, 0.2, 1.0, 1.0),  # Bright magenta
+		"D": Color(1.0, 1.0, 0.2, 1.0)   # Bright yellow
+	}
+	
 	func _init(bpm: float):
 		music_bpm = bpm
 		beat_delay = 60.0 / music_bpm  # Like original beat_delay(bpm)
@@ -36,33 +44,25 @@ class ButtonViewer extends Control:
 				button_marker.modulate = Color(1, 1, 0, 0.8)  # Yellow marker for visibility
 		
 	func setup_button_viewer():
-		"""Setup button viewer UI like original"""
-		# Load button textures - try to match original wii_*.png files
-		var button_files = {
-			"A": "res://assets/textures/wii_down.png",    # Original: wii_down.png
-			"B": "res://assets/textures/wii_right.png",   # Original: wii_right.png  
-			"C": "res://assets/textures/wii_left.png",    # Original: wii_left.png
-			"D": "res://assets/textures/wii_up.png"       # Original: wii_up.png
-		}
+		"""Setup button viewer UI with colored circle icons"""
+		# Use circle texture for all buttons with color modulation
+		var circle_texture_path = "res://assets/textures/circle.png"
+		var circle_texture = null
 		
-		for button in button_files.keys():
-			var texture_path = button_files[button]
-			if ResourceLoader.exists(texture_path):
-				button_textures[button] = load(texture_path)
-			else:
-				print("⚠️ Button texture not found: ", texture_path)
-				# Create fallback colored rectangles
-				var fallback_texture = ImageTexture.new()
-				var image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
-				var color = Color.WHITE
-				match button:
-					"A": color = Color.BLUE
-					"B": color = Color.RED  
-					"C": color = Color.MAGENTA
-					"D": color = Color.GREEN
-				image.fill(color)
-				fallback_texture.set_image(image)
-				button_textures[button] = fallback_texture
+		if ResourceLoader.exists(circle_texture_path):
+			circle_texture = load(circle_texture_path)
+		else:
+			print("⚠️ Circle texture not found: ", circle_texture_path)
+			# Create fallback circle texture
+			var fallback_texture = ImageTexture.new()
+			var image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
+			image.fill(Color.WHITE)  # White circle fallback
+			fallback_texture.set_image(image)
+			circle_texture = fallback_texture
+		
+		# Set same circle texture for all button types
+		for button in ["A", "B", "C", "D"]:
+			button_textures[button] = circle_texture
 		
 		# Create button marker (like original button_marker)
 		button_marker = TextureRect.new()
@@ -106,6 +106,12 @@ class ButtonViewer extends Control:
 		var btn_image = TextureRect.new()
 		btn_image.texture = button_textures[button]
 		btn_image.size = Vector2(BTN_SIZE, BTN_SIZE)
+		
+		# Apply color modulation to match ring colors
+		if button in button_colors:
+			btn_image.modulate = button_colors[button]
+		else:
+			btn_image.modulate = Color.WHITE  # Default white if button not found
 		
 		# Position using EXACT same formula as rings: ring_time * RING_SPACING_PER_BEAT + 5.0
 		# Convert ring Y position to button X position

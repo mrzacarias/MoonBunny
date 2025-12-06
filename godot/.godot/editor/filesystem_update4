@@ -1,0 +1,6 @@
+res://scripts/Level.gd
+res://scripts/ModelLoader.gd
+res://scripts/LevelSelect.gd
+res://scripts/Main.gd
+res://scripts/SplashScreen.gd
+res://scripts/AudioManager.gd
