@@ -19,21 +19,49 @@ var splash_tween: Tween
 
 func _ready():
 	print("SplashScreen: Ready")
+	print("SplashScreen: Node name: ", name)
+	print("SplashScreen: Node path: ", get_path())
+	print("SplashScreen: Is visible: ", visible)
+	
+	# Manual node resolution for HTML export compatibility
+	if not logo:
+		logo = get_node_or_null("CenterContainer/VBoxContainer/Logo")
+	if not splash_sound:
+		splash_sound = get_node_or_null("SplashSound")
+	if not timer:
+		timer = get_node_or_null("Timer")
+	
+	# Debug resolved variables
+	print("SplashScreen: logo = ", logo)
+	print("SplashScreen: splash_sound = ", splash_sound)
+	print("SplashScreen: timer = ", timer)
 	
 	# Set splash sound volume using centralized config
 	if splash_sound:
+		print("SplashScreen: Setting up splash sound")
 		AudioManager.apply_standard_volume(splash_sound, "sfx")
+	else:
+		print("SplashScreen: WARNING - splash_sound is null")
 	
 	# Connect timer signal
-	timer.timeout.connect(_on_timer_timeout)
+	if timer:
+		print("SplashScreen: Setting up timer")
+		timer.timeout.connect(_on_timer_timeout)
+		# Start timer as fallback
+		timer.start()
+	else:
+		print("SplashScreen: WARNING - timer is null")
 	
 	# Debug logo properties
-	print("SplashScreen: Logo texture: ", logo.texture)
-	print("SplashScreen: Logo size: ", logo.size)
-	print("SplashScreen: Logo custom_minimum_size: ", logo.custom_minimum_size)
-	
-	# Start with logo invisible
-	logo.modulate.a = 0.0
+	if logo:
+		print("SplashScreen: Logo texture: ", logo.texture)
+		print("SplashScreen: Logo size: ", logo.size)
+		print("SplashScreen: Logo custom_minimum_size: ", logo.custom_minimum_size)
+		
+		# Start with logo invisible
+		logo.modulate.a = 0.0
+	else:
+		print("SplashScreen: WARNING - logo is null")
 	
 	# Start the splash sequence
 	start_splash()
@@ -42,9 +70,24 @@ func start_splash():
 	"""Start the splash screen sequence"""
 	print("SplashScreen: Starting splash sequence")
 	
-	# Play splash sound
+	# Try to play splash sound (may fail in HTML due to autoplay policy)
 	if splash_sound and splash_sound.stream:
+		print("SplashScreen: Attempting to play splash sound")
 		splash_sound.play()
+		# Check if it actually started playing
+		await get_tree().process_frame
+		if splash_sound.playing:
+			print("SplashScreen: Splash sound is playing")
+		else:
+			print("SplashScreen: Splash sound failed to play (likely browser autoplay policy)")
+	else:
+		print("SplashScreen: No splash sound available")
+	
+	# Only proceed if logo exists
+	if not logo:
+		print("SplashScreen: Logo not found, skipping to completion")
+		_on_splash_complete()
+		return
 	
 	# Create tween sequence
 	splash_tween = create_tween()
@@ -60,6 +103,8 @@ func start_splash():
 	
 	# When tween finishes, emit signal
 	splash_tween.finished.connect(_on_splash_complete)
+	
+	print("SplashScreen: Tween sequence created and started")
 
 func _on_splash_complete():
 	"""Called when splash animation completes"""

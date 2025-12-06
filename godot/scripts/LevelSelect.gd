@@ -23,12 +23,18 @@ const ITEM_SPACING = 540.0  # 400 + 140px padding between items
 # Font resource
 var moonbunny_font: FontFile
 
+# Using global LevelResourceManager for HTML export compatibility
+
 func _ready():
+	print("LevelSelect: _ready called")
+	
 	# Load menu sound
 	menu_sound = load("res://assets/sounds/menu.wav")
 	
 	# Load font directly from TTF
 	moonbunny_font = load("res://assets/fonts/HUM521BC.TTF")
+	
+# Resources are now preloaded by LevelResourceManager autoload
 	
 	# Load available levels but don't create UI yet
 	load_available_levels()
@@ -41,26 +47,29 @@ func _ready():
 		_setup_when_visible()
 
 func _on_visibility_changed():
+	print("LevelSelect: visibility changed - visible: ", visible, " level_items.is_empty(): ", level_items.is_empty())
 	if visible and level_items.is_empty():
 		_setup_when_visible()
 
 func _setup_when_visible():
+	print("LevelSelect: _setup_when_visible called")
 	
 	# Adjust container size to accommodate horizontal scrolling
-	level_container.position = Vector2(0, 200)  # Full width, positioned below title
-	level_container.size = Vector2(get_viewport().size.x, 600)  # Full width, tall enough for items
+	if level_container:
+		level_container.position = Vector2(0, 200)  # Full width, positioned below title
+		level_container.size = Vector2(get_viewport().size.x, 600)  # Full width, tall enough for items
 	
 	# Adjust arrow positions to be closer to screen edges
 	var screen_width = get_viewport().size.x
-	arrow_left.position.x = 50  # 200px closer to left edge (was ~256px, now 50px)
-	arrow_right.position.x = screen_width - 114  # 200px closer to right edge (was ~1024px, now ~1166px)
+	if arrow_left:
+		arrow_left.position.x = 50  # 200px closer to left edge (was ~256px, now 50px)
+		arrow_left.size = Vector2(64, 64)
+		arrow_left.scale = Vector2(1.0, 1.0)
 	
-	# Ensure both arrows have the same size
-	arrow_left.size = Vector2(64, 64)
-	arrow_right.size = Vector2(64, 64)
-	arrow_left.scale = Vector2(1.0, 1.0)
-	arrow_right.scale = Vector2(1.0, 1.0)
-	
+	if arrow_right:
+		arrow_right.position.x = screen_width - 114  # 200px closer to right edge (was ~1024px, now ~1166px)
+		arrow_right.size = Vector2(64, 64)
+		arrow_right.scale = Vector2(1.0, 1.0)
 	
 	# Setup level items only when screen is actually visible
 	setup_level_items()
@@ -97,28 +106,11 @@ func play_menu_sound():
 		audio_player.play()
 		audio_player.finished.connect(audio_player.queue_free)
 
+
 func load_available_levels():
-	available_levels.clear()
-	
-	# Check for levels in the assets/levels directory
-	var levels_dir = "res://assets/levels/"
-	var dir = DirAccess.open(levels_dir)
-	
-	if dir:
-		dir.list_dir_begin()
-		var file_name = dir.get_next()
-		
-		while file_name != "":
-			if dir.current_is_dir():
-				# Check if this directory has a header.lvl file and exclude training
-				var header_path = levels_dir + file_name + "/header.lvl"
-				if FileAccess.file_exists(header_path) and file_name != "training":
-					available_levels.append(file_name)
-			file_name = dir.get_next()
-	
-	# If no levels found, add some default ones for testing
-	if available_levels.is_empty():
-		available_levels = ["7stars", "green_hill_zone", "bang_bang"]
+	# Get available levels from the global resource manager
+	available_levels = LevelResourceManager.get_available_levels()
+	print("LevelSelect: Available levels: ", available_levels)
 
 func setup_level_items():
 	"""Create level items exactly like original MoonBunny"""
@@ -133,14 +125,15 @@ func setup_level_items():
 		level_item.scale = Vector2(1.0, 1.0)  # Remove scaling temporarily to test positioning
 		
 		# Level image (512x362 scaled like original)
-		var image_path = "res://assets/levels/" + level_name + "/image.png"
-		if FileAccess.file_exists(image_path):
+		var level_texture = LevelResourceManager.get_level_image(level_name)
+		if level_texture:
 			var level_image = TextureRect.new()
-			level_image.texture = load(image_path)
+			level_image.texture = level_texture
 			level_image.size = Vector2(300, 212)  # Scaled from 512x362
 			level_image.position = Vector2(25, 20)
 			level_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			level_item.add_child(level_image)
+			print("LevelSelect: Added image for level: ", level_name)
 		else:
 			# Placeholder
 			var placeholder = ColorRect.new()
@@ -148,6 +141,7 @@ func setup_level_items():
 			placeholder.position = Vector2(25, 20)
 			placeholder.color = Color(0.2, 0.3, 0.5, 1.0)
 			level_item.add_child(placeholder)
+			print("LevelSelect: Using placeholder for level: ", level_name)
 		
 		# Text positioning - much larger gap below the image (2x more)
 		# Image: Y=20 to Y=232 (height 212), add ~212px gap (full image height)
@@ -265,9 +259,11 @@ signal level_selected(level_name: String)
 signal back_to_menu
 
 func _on_play_pressed():
+	print("LevelSelect: _on_play_pressed called - current_level_index: ", current_level_index, " available_levels: ", available_levels)
 	get_viewport().set_input_as_handled()
 	if current_level_index < available_levels.size():
 		var level_name = available_levels[current_level_index]
+		print("LevelSelect: Selecting level: ", level_name)
 		level_selected.emit(level_name)
 
 func _on_back_pressed():
@@ -287,41 +283,5 @@ func start_pulse_animation():
 		pulse_tween.tween_property(current_item, "scale", Vector2(1.0, 1.0), 0.4)
 
 func load_level_header(level_name: String) -> Dictionary:
-	"""Load level header data like original parse.level_header()"""
-	var header_path = "res://assets/levels/" + level_name + "/header.lvl"
-	var level_data = {}
-	
-	if FileAccess.file_exists(header_path):
-		var file = FileAccess.open(header_path, FileAccess.READ)
-		if file:
-			while not file.eof_reached():
-				var line = file.get_line().strip_edges()
-				if line == "" or line.begins_with("#"):
-					continue
-				
-				var parts = line.split("=")
-				if parts.size() == 2:
-					var key = parts[0].strip_edges()
-					var value = parts[1].strip_edges()
-					
-					match key:
-						"BPM":
-							level_data["BPM"] = value.to_float()
-						"TITLE":
-							level_data["TITLE"] = value
-						"ARTIST":
-							level_data["ARTIST"] = value
-						"MUSIC_FILE":
-							level_data["MUSIC_FILE"] = value
-						"DIFFICULTIES":
-							level_data["DIFFICULTIES"] = value
-			file.close()
-	
-	# Set defaults
-	level_data["NAME"] = level_name
-	if not level_data.has("TITLE"):
-		level_data["TITLE"] = level_name.replace("_", " ").capitalize()
-	if not level_data.has("BPM"):
-		level_data["BPM"] = 120.0
-	
-	return level_data
+	"""Load level header data from global resource manager"""
+	return LevelResourceManager.parse_level_header(level_name)

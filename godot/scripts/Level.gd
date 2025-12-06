@@ -134,14 +134,16 @@ func _ready():
 
 func setup_audio():
 	"""Setup audio system like original"""
-	# Load level music
+	# Load level music from resource manager
 	if level_name != "":
-		var music_path = "res://assets/levels/" + level_name + "/" + level_name + ".mp3"
-		var music_stream = load(music_path)
+		var music_stream = LevelResourceManager.get_level_music(level_name)
 		if music_stream:
 			audio_player = AudioStreamPlayer.new()
 			audio_player.stream = music_stream
 			audio_container.add_child(audio_player)
+			print("Level: Loaded music for ", level_name, " from resource manager")
+		else:
+			print("Level: No music found for ", level_name, " in resource manager")
 	
 	# Load sound effects
 	miss_sound = AudioStreamPlayer.new()
@@ -540,28 +542,25 @@ func setup_rings():
 	n_rings = ring_list.size()
 
 func load_ring_data() -> Array:
-	"""Load ring data from .rng files like original MoonBunny"""
+	"""Load ring data from resource manager"""
 	var ring_data = []
 	
 	if level_name == "":
 		print("No level name specified")
 		return ring_data
 	
-	var rng_file_path = "res://assets/levels/" + level_name + "/" + difficulty + ".rng"
-	if not FileAccess.file_exists(rng_file_path):
-		print("Ring file not found: ", rng_file_path)
+	# Get ring content from resource manager
+	var ring_content = LevelResourceManager.get_level_rings(level_name)
+	if ring_content == "":
+		print("Ring file not found for: ", level_name)
 		return ring_data
 	
-	var file = FileAccess.open(rng_file_path, FileAccess.READ)
-	if not file:
-		print("Could not open ring file: ", rng_file_path)
-		return ring_data
-	
+	var lines = ring_content.split("\n")
 	var cumulative_time = 0.0
 	var line_number = 0
 	
-	while not file.eof_reached():
-		var line = file.get_line().strip_edges()
+	for line in lines:
+		line = line.strip_edges()
 		line_number += 1
 		
 		# Skip empty lines and comments
@@ -601,10 +600,8 @@ func load_ring_data() -> Array:
 			"button": button,
 			"time": cumulative_time
 		})
-		
 	
-	file.close()
-	print("Loaded ", ring_data.size(), " rings")
+	print("Loaded ", ring_data.size(), " rings from resource manager")
 	return ring_data
 
 func setup_input():
@@ -613,51 +610,18 @@ func setup_input():
 	pass
 
 func load_level_header():
-	"""Load level header file to get BPM and other metadata like original parse.level_header()"""
+	"""Load level header file to get BPM and other metadata from resource manager"""
 	if level_name == "":
 		print("No level name specified for header loading")
 		return
 	
-	var header_file_path = "res://assets/levels/" + level_name + "/header.lvl"
-	if not FileAccess.file_exists(header_file_path):
-		print("Header file not found: ", header_file_path)
-		return
-	
-	var file = FileAccess.open(header_file_path, FileAccess.READ)
-	if not file:
-		print("Could not open header file: ", header_file_path)
-		return
-	
-	var line_number = 0
-	while not file.eof_reached():
-		var line = file.get_line().strip_edges()
-		line_number += 1
-		
-		if line == "" or line.begins_with("#"):
-			continue
-		
-		# Parse key=value format
-		var parts = line.split("=")
-		if parts.size() != 2:
-			print("Invalid header line format at line ", line_number, ": ", line)
-			continue
-		
-		var key = parts[0].strip_edges()
-		var value = parts[1].strip_edges()
-		
-		match key:
-			"BPM":
-				music_bpm = value.to_float()
-			"TITLE":
-				pass  # Level title
-			"ARTIST":
-				pass  # Level artist
-			"MUSIC_FILE":
-				pass  # Music file
-			"DIFFICULTIES":
-				pass  # Available difficulties
-	
-	file.close()
+	# Use resource manager to get parsed header data
+	var level_data = LevelResourceManager.parse_level_header(level_name)
+	if level_data.has("BPM"):
+		music_bpm = level_data["BPM"]
+		print("Level: Loaded BPM ", music_bpm, " for ", level_name, " from resource manager")
+	else:
+		print("Level: No BPM found for ", level_name, " in resource manager")
 
 func setup_tasks():
 	"""Setup continuous tasks like original ctask_ functions"""

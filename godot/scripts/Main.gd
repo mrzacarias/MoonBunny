@@ -47,19 +47,54 @@ var is_training: bool = false
 func _ready():
 	print("Main scene ready")
 	
-	# Connect UI signals
-	main_menu.start_pressed.connect(on_menu_start)
-	main_menu.training_pressed.connect(on_menu_training)
-	main_menu.exit_pressed.connect(on_menu_exit)
+	# Manual node resolution for HTML export compatibility
+	if not splash_screen:
+		splash_screen = get_node_or_null("UI/SplashScreen")
+	if not main_menu:
+		main_menu = get_node_or_null("UI/MainMenu")
+	if not level_select:
+		level_select = get_node_or_null("UI/LevelSelect")
+	if not gameplay_ui:
+		gameplay_ui = get_node_or_null("UI/GameplayUI")
+	if not result_screen:
+		result_screen = get_node_or_null("UI/ResultScreen")
+	if not background_color:
+		background_color = get_node_or_null("BackgroundColor")
+	if not black_screen_overlay:
+		black_screen_overlay = get_node_or_null("UI/BlackScreenOverlay")
+	if not level_container:
+		level_container = get_node_or_null("Level")
+	if not menu_music:
+		menu_music = get_node_or_null("MenuMusic")
 	
-	level_select.level_selected.connect(on_level_selected)
-	level_select.back_to_menu.connect(on_back_to_menu)
+	print("Main: Node resolution complete")
+	print("  splash_screen: ", splash_screen)
+	print("  main_menu: ", main_menu)
+	
+	# Connect UI signals with null checks
+	if main_menu and main_menu.has_signal("start_pressed"):
+		main_menu.start_pressed.connect(on_menu_start)
+	if main_menu and main_menu.has_signal("training_pressed"):
+		main_menu.training_pressed.connect(on_menu_training)
+	if main_menu and main_menu.has_signal("exit_pressed"):
+		main_menu.exit_pressed.connect(on_menu_exit)
+	
+	if level_select and level_select.has_signal("level_selected"):
+		level_select.level_selected.connect(on_level_selected)
+	if level_select and level_select.has_signal("back_to_menu"):
+		level_select.back_to_menu.connect(on_back_to_menu)
 	
 	# Connect ResultScreen signal
-	result_screen.return_to_menu.connect(_on_result_screen_return_to_menu)
+	if result_screen and result_screen.has_signal("return_to_menu"):
+		result_screen.return_to_menu.connect(_on_result_screen_return_to_menu)
 	
-	# Connect SplashScreen signal
-	splash_screen.splash_finished.connect(_on_splash_finished)
+	# For HTML exports, just use a simple timer-based splash screen
+	# The SplashScreen script often doesn't work properly in HTML exports
+	print("Main: Setting up simple timer-based splash screen for HTML export")
+	get_tree().create_timer(3.0).timeout.connect(func():
+		print("Main: Timer-based splash finished - transitioning to title")
+		_on_splash_finished()
+	)
 	
 	# Setup initial state
 	change_state(GameState.SPLASH)
@@ -124,30 +159,64 @@ func handle_nav_back():
 
 func hide_all_ui():
 	"""Hide all UI screens"""
-	splash_screen.visible = false
-	main_menu.visible = false
-	level_select.visible = false
-	gameplay_ui.visible = false
-	result_screen.visible = false
-	black_screen_overlay.visible = false
+	if splash_screen:
+		splash_screen.visible = false
+	if main_menu:
+		main_menu.visible = false
+	if level_select:
+		level_select.visible = false
+	if gameplay_ui:
+		gameplay_ui.visible = false
+	if result_screen:
+		result_screen.visible = false
+	if black_screen_overlay:
+		black_screen_overlay.visible = false
 
 func show_splash_screen():
-	"""Show splash screen"""
-	splash_screen.visible = true
-	background_color.visible = false  # Hide background during splash
+	"""Show splash screen with simple approach for HTML exports"""
+	print("🏠 Main: show_splash_screen called")
+	if splash_screen:
+		print("🏠 Main: splash_screen found, making visible")
+		splash_screen.visible = true
+		
+		# Try to play the splash sound manually
+		var splash_sound = splash_screen.get_node_or_null("SplashSound")
+		if splash_sound and splash_sound.stream:
+			print("🏠 Main: Playing splash sound")
+			splash_sound.play()
+		
+		# Simple logo fade animation
+		var logo = splash_screen.get_node_or_null("CenterContainer/VBoxContainer/Logo")
+		if logo:
+			print("🏠 Main: Animating logo")
+			logo.modulate.a = 0.0
+			var tween = create_tween()
+			tween.tween_property(logo, "modulate:a", 1.0, 0.5)
+			tween.tween_interval(2.0)  # Show for 2 seconds
+			tween.tween_property(logo, "modulate:a", 0.0, 0.5)
+		else:
+			print("🏠 Main: No logo found")
+	else:
+		print("🏠 Main: ERROR - splash_screen is null!")
+	
+	if background_color:
+		background_color.visible = false  # Hide background during splash
 	stop_theme_music()  # Make sure no music is playing during splash
 
 func show_title_screen():
 	"""Show title screen and start theme music"""
-	main_menu.visible = true
-	background_color.visible = true  # Show background during menus
+	if main_menu:
+		main_menu.visible = true
+	if background_color:
+		background_color.visible = true  # Show background during menus
 	start_theme_music()
 	
 	# Add delay to prevent immediate input processing when coming from results
 	if previous_state == GameState.RESULT:
 		print("🏠 Main: Coming from results, adding input delay")
 		# Temporarily disable main menu input using flag
-		main_menu.input_enabled = false
+		if main_menu:
+			main_menu.input_enabled = false
 		get_tree().create_timer(0.5).timeout.connect(func(): 
 			if main_menu and is_instance_valid(main_menu):
 				main_menu.input_enabled = true
@@ -155,21 +224,27 @@ func show_title_screen():
 		)
 	else:
 		# Normal case - enable input immediately
-		main_menu.input_enabled = true
+		if main_menu:
+			main_menu.input_enabled = true
 
 func show_level_select():
 	"""Show level selection screen"""
-	level_select.visible = true
-	background_color.visible = true  # Show background during menus
+	if level_select:
+		level_select.visible = true
+	if background_color:
+		background_color.visible = true  # Show background during menus
 	start_theme_music()
 
 
 func show_gameplay():
 	"""Show gameplay UI and start level"""
 	# Show black screen overlay initially while start sound plays
-	black_screen_overlay.visible = true
-	gameplay_ui.visible = false  # Hide gameplay UI initially
-	background_color.visible = false  # Hide background during gameplay
+	if black_screen_overlay:
+		black_screen_overlay.visible = true
+	if gameplay_ui:
+		gameplay_ui.visible = false  # Hide gameplay UI initially
+	if background_color:
+		background_color.visible = false  # Hide background during gameplay
 	stop_theme_music()
 	start_level()
 
@@ -183,15 +258,17 @@ func show_result():
 	print("🏠 Main: Showing ResultScreen scene")
 	
 	# Use local result data
-	if judgement_stats.has("stats"):
-		# New format with complete data structure
-		result_screen.show_results(judgement_stats["stats"], judgement_stats.get("score", 0), judgement_stats.get("n_rings", 0))
-	else:
-		# Fallback if data format is different (old format)
-		result_screen.show_results(judgement_stats, level_score, 0)
-	
-	result_screen.visible = true
-	background_color.visible = true  # Show background during results
+	if result_screen:
+		if judgement_stats.has("stats"):
+			# New format with complete data structure
+			result_screen.show_results(judgement_stats["stats"], judgement_stats.get("score", 0), judgement_stats.get("n_rings", 0))
+		else:
+			# Fallback if data format is different (old format)
+			result_screen.show_results(judgement_stats, level_score, 0)
+		
+		result_screen.visible = true
+	if background_color:
+		background_color.visible = true  # Show background during results
 
 func start_theme_music():
 	"""Start theme music if not already playing"""
@@ -238,7 +315,8 @@ func start_level():
 	current_level.music_started.connect(_on_level_music_started)
 	
 	# Add to scene
-	level_container.add_child(current_level)
+	if level_container:
+		level_container.add_child(current_level)
 	
 	# Start level playback
 	current_level.play()
@@ -257,17 +335,23 @@ func _on_training_finished():
 func _on_ring_hit(judgement: String, chain: int):
 	"""Handle ring hit for UI updates"""
 	# Update gameplay UI
-	if current_level:
-		gameplay_ui.get_node("ScoreLabel").text = "Score: " + str(current_level.score)
-		gameplay_ui.get_node("ChainLabel").text = "Chain: " + str(chain)
+	if current_level and gameplay_ui:
+		var score_label = gameplay_ui.get_node("ScoreLabel")
+		var chain_label = gameplay_ui.get_node("ChainLabel")
+		if score_label:
+			score_label.text = "Score: " + str(current_level.score)
+		if chain_label:
+			chain_label.text = "Chain: " + str(chain)
 		# Show judgement image
 		gameplay_ui.show_judgement(judgement)
 
 func _on_level_music_started():
 	"""Handle level music started - transition from black screen to gameplay UI"""
 	print("🏠 Main: Level music started, transitioning to gameplay UI")
-	black_screen_overlay.visible = false
-	gameplay_ui.visible = true
+	if black_screen_overlay:
+		black_screen_overlay.visible = false
+	if gameplay_ui:
+		gameplay_ui.visible = true
 
 # Menu navigation handlers - these get called by UI screens
 func on_menu_start():
@@ -306,6 +390,7 @@ func _on_result_screen_return_to_menu():
 	"""Handle ResultScreen signal to return to main menu"""
 	print("🏠 Main: ResultScreen requested return to menu")
 	on_back_to_menu()
+
 
 func _on_splash_finished():
 	"""Handle splash screen completion"""
