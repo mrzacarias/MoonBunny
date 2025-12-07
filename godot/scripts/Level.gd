@@ -39,6 +39,10 @@ var score: int = 0
 var chain: int = 0
 var terrain_offset: float = 0.0  # Separate terrain position tracking
 
+# Automatic delay detection for visual synchronization
+var timing_offset: float = 0.0  # Calculated timing offset to apply to player position
+var calibration_complete: bool = false
+
 # Judgement stats
 var judgement_stats = {
 	"PERFECT": 0,
@@ -648,6 +652,22 @@ func _start_music():
 		audio_player.play()
 		music_start_time = Time.get_unix_time_from_system()
 		is_playing = true
+		
+		# Detect HTML delay pattern and set timing offset
+		if not calibration_complete:
+			var music_time = audio_player.get_playback_position()
+			if music_time == 0.0:
+				# HTML delay pattern detected
+				timing_offset = 0.85
+				print("🔧 HTML DELAY DETECTED - Applying timing offset: ", timing_offset, "s")
+				print("DETECTED DELAY IS: ", timing_offset)
+			else:
+				# Normal timing
+				timing_offset = 0.0
+				print("🔧 NORMAL TIMING - No offset needed")
+				print("DETECTED DELAY IS: ", timing_offset)
+			calibration_complete = true
+		
 		# Emit signal to notify that music has started
 		music_started.emit()
 
@@ -665,9 +685,10 @@ func _process(_delta):
 	# Update camera (part of ctask_moveChar)
 	update_camera(music_time)
 	
-	# Update button timeline
+	# Update button timeline (with timing offset for synchronization)
 	if button_viewer:
-		button_viewer.update_timeline(music_time)
+		var adjusted_music_time = music_time + timing_offset
+		button_viewer.update_timeline(adjusted_music_time)
 	
 	# Check rings (ctask_checkNextRing equivalent)
 	check_next_ring(music_time)
@@ -683,8 +704,9 @@ func update_character_movement(current_time: float, music_time: float, delta: fl
 	if not bunny_actor:
 		return
 	
-	# Update bunny forward position based on music time
-	var bunny_pos = time_to_position(music_time)
+	# Update bunny forward position based on music time (with timing offset for HTML delay)
+	var adjusted_music_time = music_time + timing_offset
+	var bunny_pos = time_to_position(adjusted_music_time)
 	bunny_actor.position.y = bunny_pos
 	
 	# Timing is now correct, debug removed
@@ -903,9 +925,10 @@ func check_next_ring(music_time: float):
 	
 	var ring = ring_list[0]
 	
-	# Check if ring is missed - EXACT original logic
+	# Check if ring is missed - EXACT original logic (with timing offset)
 	# Original: if ring["time"] - pos < -0.11: (where pos = self.music.getTime())
-	if ring["time"] - music_time < -0.11:
+	var adjusted_music_time = music_time + timing_offset
+	if ring["time"] - adjusted_music_time < -0.11:
 		if not ring["cleared"]:
 			# Miss!
 			if miss_sound:
@@ -1072,7 +1095,9 @@ func check_button_press(button: String):
 		return
 	
 	var ring = ring_list[0]
-	var time_diff = abs(ring["time"] - music_time)
+	# Apply timing offset for hit detection synchronization
+	var adjusted_music_time = music_time + timing_offset
+	var time_diff = abs(ring["time"] - adjusted_music_time)
 	
 	# Check if correct button and within timing window
 	if ring["button"] == button and not ring["cleared"]:

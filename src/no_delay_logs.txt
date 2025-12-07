@@ -1,0 +1,153 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+LevelResourceManager: Initializing
+LevelResourceManager: Preloading all level resources
+LevelResourceManager: Preloading resources for 7stars
+LevelResourceManager: Loaded image for 7stars
+LevelResourceManager: Loaded music for 7stars
+LevelResourceManager: Loaded header via FileAccess for 7stars
+LevelResourceManager: Loaded rings via FileAccess for 7stars
+LevelResourceManager: Preloading resources for bang_bang
+LevelResourceManager: Loaded image for bang_bang
+LevelResourceManager: Loaded music for bang_bang
+LevelResourceManager: Loaded header via FileAccess for bang_bang
+LevelResourceManager: Loaded rings via FileAccess for bang_bang
+LevelResourceManager: Preloading resources for green_hill_zone
+LevelResourceManager: Loaded image for green_hill_zone
+LevelResourceManager: Loaded music for green_hill_zone
+LevelResourceManager: Loaded header via FileAccess for green_hill_zone
+LevelResourceManager: Loaded rings via FileAccess for green_hill_zone
+LevelResourceManager: Preloading resources for magic_love
+LevelResourceManager: Loaded image for magic_love
+LevelResourceManager: Loaded music for magic_love
+LevelResourceManager: Loaded header via FileAccess for magic_love
+LevelResourceManager: Loaded rings via FileAccess for magic_love
+LevelResourceManager: Preloading resources for mirrors_edge
+LevelResourceManager: Loaded image for mirrors_edge
+LevelResourceManager: Loaded music for mirrors_edge
+LevelResourceManager: Loaded header via FileAccess for mirrors_edge
+LevelResourceManager: Loaded rings via FileAccess for mirrors_edge
+LevelResourceManager: Preloading resources for rirura_2
+LevelResourceManager: Loaded image for rirura_2
+LevelResourceManager: Loaded music for rirura_2
+LevelResourceManager: Loaded header via FileAccess for rirura_2
+LevelResourceManager: Loaded rings via FileAccess for rirura_2
+LevelResourceManager: Preloading resources for training
+LevelResourceManager: Loaded image for training
+LevelResourceManager: Loaded music for training
+LevelResourceManager: Loaded header via FileAccess for training
+LevelResourceManager: Loaded rings via FileAccess for training
+SplashScreen: Ready
+SplashScreen: Node name: SplashScreen
+SplashScreen: Node path: /root/Main/UI/SplashScreen
+SplashScreen: Is visible: false
+SplashScreen: logo = Logo:<TextureRect#40969962965>
+SplashScreen: splash_sound = SplashSound:<AudioStreamPlayer#41003517399>
+SplashScreen: timer = Timer:<Timer#41037071833>
+SplashScreen: Setting up splash sound
+SplashScreen: Setting up timer
+SplashScreen: Logo texture: <CompressedTexture2D#-9223371999911344716>
+SplashScreen: Logo size: (800.0, 400.0)
+SplashScreen: Logo custom_minimum_size: (800.0, 400.0)
+SplashScreen: Starting splash sequence
+SplashScreen: Attempting to play splash sound
+LevelSelect: _ready called
+LevelSelect: Available levels: ["7stars", "bang_bang", "green_hill_zone", "magic_love", "mirrors_edge", "rirura_2", "training"]
+🏆 ResultScreen: Loaded SS texture: <CompressedTexture2D#-9223371990348331470>
+🏆 ResultScreen: Loaded S texture: <CompressedTexture2D#-9223371990079896013>
+🏆 ResultScreen: Loaded A texture: <CompressedTexture2D#-9223371989811460556>
+🏆 ResultScreen: Loaded B texture: <CompressedTexture2D#-9223371989543025099>
+🏆 ResultScreen: Loaded C texture: <CompressedTexture2D#-9223371989274589642>
+🏆 ResultScreen: Loaded F texture: <CompressedTexture2D#-9223371989006154185>
+🏆 ResultScreen: Rank textures loaded - total: 6
+🏆 ResultScreen: _ready called, input disabled
+Main scene ready
+Main: Node resolution complete
+  splash_screen: SplashScreen:<Control#40835745190>
+  main_menu: MainMenu:<Control#41053849050>
+Main: Setting up simple timer-based splash screen for HTML export
+🏠 Main: State changed to SPLASH
+🏠 Main: is_training=false
+🏠 Main: show_splash_screen called
+🏠 Main: splash_screen found, making visible
+🏠 Main: Playing splash sound
+🏠 Main: Animating logo
+SplashScreen: Splash sound is playing
+SplashScreen: Tween sequence created and started
+SplashScreen: Timer timeout fallback
+Main: Timer-based splash finished - transitioning to title
+🏠 Main: Splash screen finished, transitioning to title
+🏠 Main: State changed to TITLE
+🏠 Main: is_training=false
+🏠 MainMenu: ACCEPT pressed, selection=0
+🏠 MainMenu: Selecting option 0
+🏠 MainMenu: Starting game (going to level select)
+🏠 Main: State changed to LEVEL_SELECT
+🏠 Main: is_training=false
+LevelSelect: visibility changed - visible: true level_items.is_empty(): true
+LevelSelect: _setup_when_visible called
+LevelSelect: Added image for level: 7stars
+LevelSelect: Added image for level: bang_bang
+LevelSelect: Added image for level: green_hill_zone
+LevelSelect: Added image for level: magic_love
+LevelSelect: Added image for level: mirrors_edge
+LevelSelect: Added image for level: rirura_2
+LevelSelect: Added image for level: training
+SplashScreen: Splash complete, emitting signal
+LevelSelect: _on_play_pressed called - current_level_index: 0 available_levels: ["7stars", "bang_bang", "green_hill_zone", "magic_love", "mirrors_edge", "rirura_2", "training"]
+LevelSelect: Selecting level: 7stars
+🏠 Main: State changed to LEVEL
+🏠 Main: is_training=false
+LevelSelect: visibility changed - visible: false level_items.is_empty(): false
+Level ready: 7stars (Normal)
+Level: Loaded BPM 132.0 for 7stars from resource manager
+Level: Loaded music for 7stars from resource manager
+✅ Found Skeleton3D with 30 bones
+Loaded GLB model: res://assets/models/bunny_boy.glb
+✅ Added ear animation controller to bunny
+Loaded 129 rings from resource manager
+🎵 MUSIC STARTED - Time: 0.00290249427781s, System time: 1765074443.1782
+🏠 Main: Level music started, transitioning to gameplay UI
+🏃 PLAYER MOVEMENT STARTED - Music time: 0.02321995422244s, Position: (0.0, 0.0, -10.0)
+🏔️ TREADMILL MOVEMENT STARTED - Music time: 0.02321995422244s, Camera Y: -1.47832202911377
+🎯 BUTTON PRESS - Button: A, Music time: 6.87020397186279s, Ring time: 6.79501363636364s, Time diff: -0.07519033549916s
+🎯 Positions - Player: (-0.210936, 301.395, -10.07916), Ring: (-0.41036, 298.9806, -10.2)
+🎯 BUTTON PRESS - Button: C, Music time: 8.66394519805908s, Ring time: 8.60701818181818s, Time diff: -0.0569270162409s
+🎯 Positions - Player: (-0.281248, 380.7028, -10.19583), Ring: (-0.293955, 378.7088, -10.2)
+🎯 BUTTON PRESS - Button: B, Music time: 10.4344673156738s, Ring time: 10.4190227272727s, Time diff: -0.0154445884011s
+🎯 Positions - Player: (0.277742, 458.6057, -10.21218), Ring: (0.237995, 458.437, -10.2)
+🎯 BUTTON PRESS - Button: C, Music time: 12.2369165420532s, Ring time: 12.2310272727273s, Time diff: -0.00588926932595s
+🎯 Positions - Player: (-0.515592, 537.4026, -10.25002), Ring: (-0.427314, 538.1652, -10.2)
+🎯 BUTTON PRESS - Button: B, Music time: 13.8797283172607s, Ring time: 13.8165313636364s, Time diff: -0.06319695362438s
+🎯 Positions - Player: (0.308189, 610.1972, -10.19167), Ring: (0.333503, 607.9274, -10.2)
+🎯 BUTTON PRESS - Button: B, Music time: 14.0480728149414s, Ring time: 14.0430318181818s, Time diff: -0.00504099675959s
+🎯 Positions - Player: (0.308497, 617.7321, -10.19167), Ring: (0.206483, 617.8934, -10.2)
+Level ended early - counting 123 remaining rings as misses
+🧹 Level: GUI elements cleaned up
+Level finished! Final score: 1200
+Stats: { "PERFECT": 6, "GOOD": 0, "OK": 0, "BAD": 0, "MISS": 123 }
+Total rings: 129
+🏠 Main: State changed to RESULT
+🏠 Main: is_training=false
+🏠 Main: Showing ResultScreen scene
+🏆 ResultScreen: show_results called with stats={ "PERFECT": 6, "GOOD": 0, "OK": 0, "BAD": 0, "MISS": 123 } score=1200 n_rings=129
+🏆 ResultScreen: Calculating rank - stats: { "PERFECT": 6, "GOOD": 0, "OK": 0, "BAD": 0, "MISS": 123 } n_rings: 129
+🏆 ResultScreen: Calculated rates: { "PERFECT": 0.04651162790698, "GOOD": 0.0, "OK": 0.0, "BAD": 0.0, "MISS": 0.95348837209302 }
+🏆 ResultScreen: No rank conditions met, returning F
+🏆 ResultScreen: Set rank image to F - texture: <CompressedTexture2D#-9223371989006154185>
+🏆 ResultScreen: RankImage visible: true
+🏆 ResultScreen: RankImage size: (337.0, 337.0)
+🏆 ResultScreen: RankImage position: (848.0, 329.0)
+🏆 ResultScreen: RankImage modulate: (1.0, 1.0, 1.0, 1.0)
+🏆 ResultScreen: Showing results - Rank: F Score: 1200
+🏆 ResultScreen: Input processing enabled after delay
+🏆 ResultScreen: Key pressed (Escape) - processing enabled: true
+🏆 ResultScreen: Input received (Escape), emitting return_to_menu signal
+🏠 Main: ResultScreen requested return to menu
+🏠 Main: State changed to TITLE
+🏠 Main: is_training=false
+🏠 Main: Coming from results, adding input delay
+🏠 Main: MainMenu input re-enabled
+🏠 MainMenu: CANCEL pressed
+--- Debugging process stopped ---

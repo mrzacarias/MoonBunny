@@ -1,1 +1,3 @@
-res://scripts/LevelResourceManager.gd
+res://scripts/Level.gd
+res://scripts/Main.gd
+res://scenes/Level.tscn

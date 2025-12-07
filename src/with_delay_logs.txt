@@ -1,0 +1,177 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+index.js:470 OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL
+index.js:470 Build configuration: Emscripten 4.0.10, single-threaded, no GDExtension support.
+index.js:485 ERROR: Screen space AA is currently unavailable on the Compatibility renderer.
+onPrintError @ index.js:485Understand this error
+index.js:485    at: viewport_set_screen_space_aa (servers/rendering/renderer_viewport.cpp:1377)
+onPrintError @ index.js:485Understand this error
+index.js:470 LevelResourceManager: Initializing
+index.js:470 LevelResourceManager: Preloading all level resources
+index.js:470 LevelResourceManager: Preloading resources for 7stars
+index.js:470 LevelResourceManager: Loaded image for 7stars
+index.js:470 LevelResourceManager: Loaded music for 7stars
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for 7stars
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for 7stars
+index.js:470 LevelResourceManager: Preloading resources for bang_bang
+index.js:470 LevelResourceManager: Loaded image for bang_bang
+index.js:470 LevelResourceManager: Loaded music for bang_bang
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for bang_bang
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for bang_bang
+index.js:470 LevelResourceManager: Preloading resources for green_hill_zone
+index.js:470 LevelResourceManager: Loaded image for green_hill_zone
+index.js:470 LevelResourceManager: Loaded music for green_hill_zone
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for green_hill_zone
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for green_hill_zone
+index.js:470 LevelResourceManager: Preloading resources for magic_love
+index.js:470 LevelResourceManager: Loaded image for magic_love
+index.js:470 LevelResourceManager: Loaded music for magic_love
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for magic_love
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for magic_love
+index.js:470 LevelResourceManager: Preloading resources for mirrors_edge
+index.js:470 LevelResourceManager: Loaded image for mirrors_edge
+index.js:470 LevelResourceManager: Loaded music for mirrors_edge
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for mirrors_edge
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for mirrors_edge
+index.js:470 LevelResourceManager: Preloading resources for rirura_2
+index.js:470 LevelResourceManager: Loaded image for rirura_2
+index.js:470 LevelResourceManager: Loaded music for rirura_2
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for rirura_2
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for rirura_2
+index.js:470 LevelResourceManager: Preloading resources for training
+index.js:470 LevelResourceManager: Loaded image for training
+index.js:470 LevelResourceManager: Loaded music for training
+index.js:470 LevelResourceManager: FileAccess failed for header, using fallback for training
+index.js:470 LevelResourceManager: FileAccess failed for rings, using fallback for training
+index.js:470 LevelSelect: _ready called
+index.js:470 LevelSelect: Available levels: ["7stars", "bang_bang", "green_hill_zone", "magic_love", "mirrors_edge", "rirura_2", "training"]
+index.js:470 🏆 ResultScreen: Loaded SS texture: <CompressedTexture2D#-9223372002243377757>
+index.js:470 🏆 ResultScreen: Loaded S texture: <CompressedTexture2D#-9223372002042051164>
+index.js:470 🏆 ResultScreen: Loaded A texture: <CompressedTexture2D#-9223372001840724571>
+index.js:470 🏆 ResultScreen: Loaded B texture: <CompressedTexture2D#-9223372001639397978>
+index.js:470 🏆 ResultScreen: Loaded C texture: <CompressedTexture2D#-9223372001438071385>
+index.js:470 🏆 ResultScreen: Loaded F texture: <CompressedTexture2D#-9223372001236744792>
+index.js:470 🏆 ResultScreen: Rank textures loaded - total: 6
+index.js:470 🏆 ResultScreen: _ready called, input disabled
+index.js:470 Main scene ready
+index.js:470 Main: Node resolution complete
+index.js:470   splash_screen: SplashScreen:<Control#29544678684>
+index.js:470   main_menu: MainMenu:<Control#29762782540>
+index.js:470 Main: Setting up simple timer-based splash screen for HTML export
+index.js:470 🏠 Main: State changed to SPLASH
+index.js:470 🏠 Main: is_training=false
+index.js:470 🏠 Main: show_splash_screen called
+index.js:470 🏠 Main: splash_screen found, making visible
+index.js:470 🏠 Main: Playing splash sound
+index.js:470 🏠 Main: Animating logo
+index.js:470 Main: Timer-based splash finished - transitioning to title
+index.js:470 🏠 Main: Splash screen finished, transitioning to title
+index.js:470 🏠 Main: State changed to TITLE
+index.js:470 🏠 Main: is_training=false
+index.js:470 🏠 MainMenu: ACCEPT pressed, selection=0
+index.js:470 🏠 MainMenu: Selecting option 0
+index.js:470 🏠 MainMenu: Starting game (going to level select)
+index.js:470 🏠 Main: State changed to LEVEL_SELECT
+index.js:470 🏠 Main: is_training=false
+index.js:470 LevelSelect: visibility changed - visible: true level_items.is_empty(): true
+index.js:470 LevelSelect: _setup_when_visible called
+index.js:470 LevelSelect: Added image for level: 7stars
+index.js:470 LevelSelect: Added image for level: bang_bang
+index.js:470 LevelSelect: Added image for level: green_hill_zone
+index.js:470 LevelSelect: Added image for level: magic_love
+index.js:470 LevelSelect: Added image for level: mirrors_edge
+index.js:470 LevelSelect: Added image for level: rirura_2
+index.js:470 LevelSelect: Added image for level: training
+index.js:470 LevelSelect: _on_play_pressed called - current_level_index: 0 available_levels: ["7stars", "bang_bang", "green_hill_zone", "magic_love", "mirrors_edge", "rirura_2", "training"]
+index.js:470 LevelSelect: Selecting level: 7stars
+index.js:470 🏠 Main: State changed to LEVEL
+index.js:470 🏠 Main: is_training=false
+index.js:470 LevelSelect: visibility changed - visible: false level_items.is_empty(): false
+index.js:470 Level ready: 7stars (Normal)
+index.js:470 Level: Loaded BPM 132.0 for 7stars from resource manager
+index.js:470 Level: Loaded music for 7stars from resource manager
+index.js:470 ✅ Found Skeleton3D with 30 bones
+index.js:470 Loaded GLB model: res://assets/models/bunny_boy.glb
+index.js:470 ✅ Added ear animation controller to bunny
+index.js:470 Loaded 129 rings from resource manager
+index.js:470 🎵 MUSIC STARTED - Time: 0.0s, System time: 1765075834.39
+index.js:470 🔧 EARLY DELAY DETECTION - Music time is 0.0s, likely HTML delay
+index.js:470 🔧 EARLY CALIBRATION - Assuming HTML delay pattern
+index.js:470 🔧 EARLY CALIBRATION COMPLETE - Offset: 0.85s
+index.js:470 🔧 UPDATING RING POSITIONS - Applying offset: 0.85s
+index.js:470 🔧 Total rings to update: 129
+index.js:470 🔧 Ring 0 - Stored time: 6.79501363636364s, Beat delay: 0.45454545454545s
+index.js:470 🔧 Ring 0 - Original time: 14.94903s, Adjusted: 14.09903s
+index.js:470 🔧 Ring 0 - Old Y: 298.980590820312, New Y: 281.9806, Change: -16.9999908203125
+index.js:470 🔧 Ring 0 - RING_SPACING_PER_BEAT: 20.0
+index.js:470 🔧 Ring 0 - Final position: (-0.966727, 281.9806, -10.2)
+index.js:470 🔧 Ring 1 - Stored time: 8.60701818181818s, Beat delay: 0.45454545454545s
+index.js:470 🔧 Ring 1 - Original time: 18.93544s, Adjusted: 18.08544s
+index.js:470 🔧 Ring 1 - Old Y: 378.708801269531, New Y: 361.7088, Change: -17.0000012695313
+index.js:470 🔧 Ring 1 - RING_SPACING_PER_BEAT: 20.0
+index.js:470 🔧 Ring 1 - Final position: (-0.165399, 361.7088, -10.2)
+index.js:470 🔧 Ring 2 - Stored time: 10.4190227272727s, Beat delay: 0.45454545454545s
+index.js:470 🔧 Ring 2 - Original time: 22.92185s, Adjusted: 22.07185s
+index.js:470 🔧 Ring 2 - Old Y: 458.43701171875, New Y: 441.437, Change: -17.00001171875
+index.js:470 🔧 Ring 2 - RING_SPACING_PER_BEAT: 20.0
+index.js:470 🔧 Ring 2 - Final position: (0.36716, 441.437, -10.2)
+index.js:470 🔧 Ring 3 - Stored time: 12.2310272727273s, Beat delay: 0.45454545454545s
+index.js:470 🔧 Ring 3 - Original time: 26.90826s, Adjusted: 26.05826s
+index.js:470 🔧 Ring 3 - Old Y: 538.165222167969, New Y: 521.1652, Change: -17.0000221679688
+index.js:470 🔧 Ring 3 - RING_SPACING_PER_BEAT: 20.0
+index.js:470 🔧 Ring 3 - Final position: (-0.227274, 521.1652, -10.2)
+index.js:470 🔧 Ring 4 - Stored time: 13.8165313636364s, Beat delay: 0.45454545454545s
+index.js:470 🔧 Ring 4 - Original time: 30.396369s, Adjusted: 29.546369s
+index.js:470 🔧 Ring 4 - Old Y: 607.927368164062, New Y: 590.92738, Change: -16.9999881640625
+index.js:470 🔧 Ring 4 - RING_SPACING_PER_BEAT: 20.0
+index.js:470 🔧 Ring 4 - Final position: (0.321692, 590.9274, -10.2)
+index.js:470 🔧 POSITION UPDATE COMPLETE - Updated 129 rings
+index.js:470 🔧 FIRST RING FINAL CHECK:
+index.js:470 🔧   Time: 6.79501363636364s
+index.js:470 🔧   Position: (-0.966727, 281.9806, -10.2)
+index.js:470 🔧   Expected to be hit at music time: 5.94501363636364s
+index.js:470 🏠 Main: Level music started, transitioning to gameplay UI
+index.js:470 🏃 PLAYER MOVEMENT STARTED - Music time: 0.0s, Position: (0.0, 0.0, -10.0)
+index.js:470 🏔️ TREADMILL MOVEMENT STARTED - Music time: 0.0s, Camera Y: -2.5
+index.js:470 🎯 BUTTON PRESS - Button: A, Music time: 5.90933322906494s
+index.js:470 🎯 Ring time - Original: 6.79501363636364s, Adjusted: 5.94501363636364s
+index.js:470 🎯 Time diff - Original: 0.8856804072987s, Adjusted: 0.0356804072987s
+index.js:470 🎯 Positions - Player: (-0.096314, 260.0107, -10.06952), Ring: (-0.966727, 281.9806, -10.2)
+index.js:470 🎯 BUTTON PRESS - Button: C, Music time: 7.73333311080933s
+index.js:470 🎯 Ring time - Original: 8.60701818181818s, Adjusted: 7.75701818181818s
+index.js:470 🎯 Time diff - Original: 0.87368507100886s, Adjusted: 0.02368507100886s
+index.js:470 🎯 Positions - Player: (-0.346433, 340.032, -10.11975), Ring: (-0.165399, 361.7088, -10.2)
+index.js:470 🎯 BUTTON PRESS - Button: B, Music time: 9.53600025177002s
+index.js:470 🎯 Ring time - Original: 10.4190227272727s, Adjusted: 9.56902272727273s
+index.js:470 🎯 Time diff - Original: 0.88302247550271s, Adjusted: 0.03302247550271s
+index.js:470 🎯 Positions - Player: (0.286113, 419.1147, -10.0862), Ring: (0.36716, 441.437, -10.2)
+index.js:470 🎯 BUTTON PRESS - Button: C, Music time: 11.3280000686646s
+index.js:470 🎯 Ring time - Original: 12.2310272727273s, Adjusted: 11.3810272727273s
+index.js:470 🎯 Time diff - Original: 0.90302720406272s, Adjusted: 0.05302720406272s
+index.js:470 🎯 Positions - Player: (-0.328432, 498.432, -10.16953), Ring: (-0.227274, 521.1652, -10.2)
+index.js:470 🎯 BUTTON PRESS - Button: B, Music time: 12.9440002441406s
+index.js:470 🎯 Ring time - Original: 13.8165313636364s, Adjusted: 12.9665313636364s
+index.js:470 🎯 Time diff - Original: 0.87253111949574s, Adjusted: 0.02253111949574s
+index.js:470 🎯 Positions - Player: (0.189795, 569.536, -10.10559), Ring: (0.321692, 590.9274, -10.2)
+index.js:470 🎯 BUTTON PRESS - Button: B, Music time: 13.1253337860107s
+index.js:470 🎯 Ring time - Original: 14.0430318181818s, Adjusted: 13.1930318181818s
+index.js:470 🎯 Time diff - Original: 0.91769803217108s, Adjusted: 0.06769803217108s
+index.js:470 🎯 Positions - Player: (0.190036, 577.5147, -10.10556), Ring: (0.386371, 600.8934, -10.2)
+index.js:470 Level ended early - counting 123 remaining rings as misses
+index.js:470 🧹 Level: GUI elements cleaned up
+index.js:470 Level finished! Final score: 1200
+index.js:470 Stats: { "PERFECT": 6, "GOOD": 0, "OK": 0, "BAD": 0, "MISS": 123 }
+index.js:470 Total rings: 129
+index.js:470 🏠 Main: State changed to RESULT
+index.js:470 🏠 Main: is_training=false
+index.js:470 🏠 Main: Showing ResultScreen scene
+index.js:470 🏆 ResultScreen: show_results called with stats={ "PERFECT": 6, "GOOD": 0, "OK": 0, "BAD": 0, "MISS": 123 } score=1200 n_rings=129
+index.js:470 🏆 ResultScreen: Calculating rank - stats: { "PERFECT": 6, "GOOD": 0, "OK": 0, "BAD": 0, "MISS": 123 } n_rings: 129
+index.js:470 🏆 ResultScreen: Calculated rates: { "PERFECT": 0.04651162790698, "GOOD": 0.0, "OK": 0.0, "BAD": 0.0, "MISS": 0.95348837209302 }
+index.js:470 🏆 ResultScreen: No rank conditions met, returning F
+index.js:470 🏆 ResultScreen: Set rank image to F - texture: <CompressedTexture2D#-9223372001236744792>
+index.js:470 🏆 ResultScreen: RankImage visible: true
+index.js:470 🏆 ResultScreen: RankImage size: (337.0, 337.0)
+index.js:470 🏆 ResultScreen: RankImage position: (848.0, 329.0)
+index.js:470 🏆 ResultScreen: RankImage modulate: (1.0, 1.0, 1.0, 1.0)
+index.js:470 🏆 ResultScreen: Showing results - Rank: F Score: 1200
+index.js:470 🏆 ResultScreen: Input processing enabled after delay
