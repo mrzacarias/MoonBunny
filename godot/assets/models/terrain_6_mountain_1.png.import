@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://ddo3g8sivorx0"
 path.s3tc="res://.godot/imported/terrain_6_mountain_1.png-15e26fc4d64720066110cabca0ce5078.s3tc.ctex"
+path.etc2="res://.godot/imported/terrain_6_mountain_1.png-15e26fc4d64720066110cabca0ce5078.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/terrain_6_mountain_1.png"
-dest_files=["res://.godot/imported/terrain_6_mountain_1.png-15e26fc4d64720066110cabca0ce5078.s3tc.ctex"]
+dest_files=["res://.godot/imported/terrain_6_mountain_1.png-15e26fc4d64720066110cabca0ce5078.s3tc.ctex", "res://.godot/imported/terrain_6_mountain_1.png-15e26fc4d64720066110cabca0ce5078.etc2.ctex"]
 
 [params]
 

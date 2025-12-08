@@ -5,10 +5,10 @@
 class_name AudioManager
 
 # Volume settings (in dB)
-# 0 dB = 100% volume, -3.1 dB ≈ 70% volume, -6 dB ≈ 50% volume
-const MASTER_VOLUME_DB: float = -3.1  # 70% volume for all audio
+# 0 dB = 100% volume, -3.1 dB ≈ 70% volume, -6 dB ≈ 50% volume, -6.2 dB ≈ 49% volume, -3.9 dB ≈ 64% volume
+const MASTER_VOLUME_DB: float = -6.2  # 49% volume for all audio (30% reduction from 70%)
 const MUSIC_VOLUME_DB: float = MASTER_VOLUME_DB
-const SFX_VOLUME_DB: float = MASTER_VOLUME_DB
+const SFX_VOLUME_DB: float = -3.9  # 64% volume for sound effects (30% increase from 49%)
 const MENU_SOUND_VOLUME_DB: float = MASTER_VOLUME_DB
 
 # Convenience function to apply standard volume to any AudioStreamPlayer

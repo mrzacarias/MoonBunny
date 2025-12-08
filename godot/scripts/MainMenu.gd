@@ -148,6 +148,7 @@ func change_selection(direction: int):
 		var audio_player = AudioStreamPlayer.new()
 		add_child(audio_player)
 		audio_player.stream = menu_sound
+		AudioManager.apply_standard_volume(audio_player, "menu")
 		audio_player.play()
 		audio_player.finished.connect(audio_player.queue_free)
 	

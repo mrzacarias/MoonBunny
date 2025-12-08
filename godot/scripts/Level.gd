@@ -144,6 +144,7 @@ func setup_audio():
 		if music_stream:
 			audio_player = AudioStreamPlayer.new()
 			audio_player.stream = music_stream
+			AudioManager.apply_standard_volume(audio_player, "level_music")
 			audio_container.add_child(audio_player)
 			print("Level: Loaded music for ", level_name, " from resource manager")
 		else:
@@ -154,6 +155,7 @@ func setup_audio():
 	var miss_stream = load("res://assets/sounds/miss.wav")
 	if miss_stream:
 		miss_sound.stream = miss_stream
+		AudioManager.apply_standard_volume(miss_sound, "sfx")
 		audio_container.add_child(miss_sound)
 	
 	# Load start level sound
@@ -161,6 +163,7 @@ func setup_audio():
 	var start_stream = load("res://assets/sounds/start_level.wav")
 	if start_stream:
 		start_level_sound.stream = start_stream
+		AudioManager.apply_standard_volume(start_level_sound, "sfx")
 		audio_container.add_child(start_level_sound)
 
 func setup_graphics():
@@ -189,7 +192,8 @@ func setup_graphics():
 	# Force environment sky for better web export brightness
 	setup_environment_sky()
 	
-	# Lighting is already set up in the scene file
+	# Lighting is already set up in the scene file, but adjust for HTML platform
+	adjust_lighting_for_platform()
 
 func setup_bunny_actor():
 	"""Setup bunny actor with mesh and animations like original"""
@@ -343,6 +347,25 @@ func animate_skybox_texture():
 		var time = Time.get_ticks_msec() / 1000.0
 		var uv_offset = Vector3(time * 0.01, 0.0, 0.0)  # Only X axis drift, no Y movement
 		std_material.uv1_offset = uv_offset
+
+func adjust_lighting_for_platform():
+	"""Adjust lighting brightness for HTML platform - make objects darker"""
+	if OS.get_name() == "Web":
+		# Find and adjust DirectionalLight nodes (now 40% darker total)
+		var environment_node = get_node("Environment")
+		if environment_node:
+			for child in environment_node.get_children():
+				if child is DirectionalLight3D:
+					var original_energy = child.light_energy
+					child.light_energy = original_energy * 0.6  # 40% darker (was 0.8, now 0.6)
+					print("🌐 HTML: Reduced DirectionalLight energy from ", original_energy, " to ", child.light_energy)
+		
+		# Adjust camera environment ambient light if it exists (now 40% darker total)
+		if camera and camera.environment:
+			var env = camera.environment
+			var original_ambient = env.ambient_light_energy
+			env.ambient_light_energy = original_ambient * 0.6  # 40% darker (was 0.8, now 0.6)
+			print("🌐 HTML: Reduced ambient light energy from ", original_ambient, " to ", env.ambient_light_energy)
 
 func setup_environment_sky():
 	"""Setup environment-based sky as backup method"""

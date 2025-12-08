@@ -132,22 +132,28 @@ static func create_ring_material(button: String) -> StandardMaterial3D:
 	"""Create ring material with proper colors and effects"""
 	var material = StandardMaterial3D.new()
 	
+	# Platform-specific brightness adjustment
+	var brightness_multiplier = 1.0
+	if OS.get_name() == "Web":
+		brightness_multiplier = 0.6  # 40% darker for HTML (was 0.8, now 0.6 for additional 20% reduction)
+		print("🌐 HTML: Using darker ring materials (", brightness_multiplier, "x)")
+	
 	match button:
 		"A": 
 			material.albedo_color = Color(0.3, 0.5, 1.0, 1.0)  # Bright blue
-			material.emission = Color(0.15, 0.25, 0.6, 1.0)
+			material.emission = Color(0.15, 0.25, 0.6, 1.0) * brightness_multiplier
 		"B": 
 			material.albedo_color = Color(1.0, 0.2, 0.2, 1.0)  # Bright red
-			material.emission = Color(0.6, 0.1, 0.1, 1.0)
+			material.emission = Color(0.6, 0.1, 0.1, 1.0) * brightness_multiplier
 		"C": 
 			material.albedo_color = Color(1.0, 0.2, 1.0, 1.0)  # Bright magenta
-			material.emission = Color(0.6, 0.1, 0.6, 1.0)
+			material.emission = Color(0.6, 0.1, 0.6, 1.0) * brightness_multiplier
 		"D": 
 			material.albedo_color = Color(1.0, 1.0, 0.2, 1.0)  # Bright yellow
-			material.emission = Color(0.6, 0.6, 0.1, 1.0)
+			material.emission = Color(0.6, 0.6, 0.1, 1.0) * brightness_multiplier
 		_:
 			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # White default
-			material.emission = Color(0.3, 0.3, 0.3, 1.0)
+			material.emission = Color(0.3, 0.3, 0.3, 1.0) * brightness_multiplier
 	
 	material.emission_enabled = true
 	material.roughness = 0.1

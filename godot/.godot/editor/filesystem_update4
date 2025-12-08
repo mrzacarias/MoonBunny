@@ -1,6 +1,3 @@
-res://scripts/Level.gd
-res://scripts/Main.gd
-res://scenes/Level.tscn
 res://scripts/LevelSelect.gd
-res://scenes/LevelSelect.tscn
+res://scripts/Level.gd
 res://scripts/ModelLoader.gd

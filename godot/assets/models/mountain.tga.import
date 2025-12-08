@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dai54732gvnc0"
 path.s3tc="res://.godot/imported/mountain.tga-75d72e1ab33a950607e0f842166b1153.s3tc.ctex"
+path.etc2="res://.godot/imported/mountain.tga-75d72e1ab33a950607e0f842166b1153.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/models/mountain.tga"
-dest_files=["res://.godot/imported/mountain.tga-75d72e1ab33a950607e0f842166b1153.s3tc.ctex"]
+dest_files=["res://.godot/imported/mountain.tga-75d72e1ab33a950607e0f842166b1153.s3tc.ctex", "res://.godot/imported/mountain.tga-75d72e1ab33a950607e0f842166b1153.etc2.ctex"]
 
 [params]
 

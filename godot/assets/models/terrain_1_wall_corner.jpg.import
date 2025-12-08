@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnxly36h8dluw"
 path.s3tc="res://.godot/imported/terrain_1_wall_corner.jpg-ebf3f9382766e1ad3a99f2889f9e1b58.s3tc.ctex"
+path.etc2="res://.godot/imported/terrain_1_wall_corner.jpg-ebf3f9382766e1ad3a99f2889f9e1b58.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/terrain_1_wall_corner.jpg"
-dest_files=["res://.godot/imported/terrain_1_wall_corner.jpg-ebf3f9382766e1ad3a99f2889f9e1b58.s3tc.ctex"]
+dest_files=["res://.godot/imported/terrain_1_wall_corner.jpg-ebf3f9382766e1ad3a99f2889f9e1b58.s3tc.ctex", "res://.godot/imported/terrain_1_wall_corner.jpg-ebf3f9382766e1ad3a99f2889f9e1b58.etc2.ctex"]
 
 [params]
 

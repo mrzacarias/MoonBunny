@@ -67,6 +67,10 @@ func _ready():
 	if not menu_music:
 		menu_music = get_node_or_null("MenuMusic")
 	
+	# Apply AudioManager volume settings to menu music
+	if menu_music:
+		AudioManager.apply_standard_volume(menu_music, "menu")
+	
 	print("Main: Node resolution complete")
 	print("  splash_screen: ", splash_screen)
 	print("  main_menu: ", main_menu)
