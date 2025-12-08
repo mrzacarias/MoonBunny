@@ -111,11 +111,15 @@ static func create_material_with_texture(texture_path: String) -> StandardMateri
 		material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)  # Fallback gray
 	
 	# Set good default material properties for Godot 4.x
-	material.roughness = 0.4
-	material.metallic = 0.0
+	material.roughness = 1.0  # Maximum roughness to eliminate reflections
+	material.metallic = 0.0   # No metallic properties
 	# Note: 'specular' property was removed in Godot 4.x, now controlled by roughness and metallic
 	material.flags_transparent = false
 	material.flags_albedo_tex_force_srgb = true
+	# Additional settings to reduce reflections
+	material.specular = 0.0  # Minimize specular highlights
+	# Use normal albedo color without web-specific adjustments
+	# material.albedo_color = material.albedo_color * 1.1  # Removed web-specific brightness
 	
 	return material
 
@@ -157,14 +161,14 @@ static func create_skybox_material() -> StandardMaterial3D:
 	"""Create skybox material with proper texture"""
 	var material = StandardMaterial3D.new()
 	
-	# Skybox material settings for Godot 4
+	# Skybox material settings for Godot 4 - optimized for brightness
 	material.cull_mode = BaseMaterial3D.CULL_FRONT  # Render inside
-	material.flags_unshaded = true
+	material.flags_unshaded = true  # This is key - unshaded means no lighting affects it
 	material.flags_do_not_receive_shadows = true
-	material.flags_disable_ambient_light = true
+	material.flags_disable_ambient_light = true  # This is correct for skybox
 	material.no_depth_test = true
 	material.vertex_color_use_as_albedo = false
-	material.flags_albedo_tex_force_srgb = true
+	material.flags_albedo_tex_force_srgb = true  # Force sRGB for proper color space in web
 	
 	# Try the better skybox texture first
 	var sky_texture_paths = [
@@ -180,12 +184,21 @@ static func create_skybox_material() -> StandardMaterial3D:
 			print("🔍 Loaded resource type: ", type_string(typeof(sky_texture)))
 			if sky_texture and sky_texture is Texture2D:
 				material.albedo_texture = sky_texture
-				material.albedo_color = Color.WHITE  # Pure white to show texture clearly
+				material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # Pure white base
 				
-				# Force texture settings
+				# Restore emission system for consistent brightness in both editor and web
+				material.emission_enabled = true
+				material.emission_texture = sky_texture  # Use same texture for emission
+				
+				# Use same emission for all platforms to ensure consistent brightness
+				material.emission = Color(2.5, 2.5, 2.5, 1.0)  # Same emission for both web and desktop
+				
+				# Optimize texture settings for web export brightness
 				material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
 				material.uv1_scale = Vector3(1.0, 1.0, 1.0)
 				material.uv1_offset = Vector3(0.0, 0.0, 0.0)
+				# Ensure proper shading for brightness
+				material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 				
 				print("✅ Successfully applied sky texture: ", sky_texture_path)
 				print("🔍 Texture size: ", sky_texture.get_size())

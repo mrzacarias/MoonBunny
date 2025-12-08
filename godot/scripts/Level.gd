@@ -186,9 +186,8 @@ func setup_graphics():
 					skybox_has_materials = true
 					break
 	
-	# Only set up environment sky if mesh skybox has no materials
-	if not skybox_has_materials:
-		setup_environment_sky()
+	# Force environment sky for better web export brightness
+	setup_environment_sky()
 	
 	# Lighting is already set up in the scene file
 
@@ -210,7 +209,7 @@ func setup_bunny_actor():
 	
 		# Apply fallback material
 		var fallback_material = StandardMaterial3D.new()
-		fallback_material.albedo_color = Color(0.9, 0.85, 0.8, 1.0)  # Bunny-like color
+		fallback_material.albedo_color = Color(1.0, 0.95, 0.9, 1.0)  # Slightly brighter bunny-like color for web
 		fallback_material.roughness = 0.4
 		fallback_material.metallic = 0.0
 		mesh_instance.material_override = fallback_material
@@ -366,15 +365,21 @@ func setup_environment_sky():
 		if ResourceLoader.exists(sky_texture_path):
 			var sky_texture = load(sky_texture_path)
 			if sky_texture and sky_texture is Texture2D:
-				# Create sky material
+				# Create sky material with platform-specific brightness
 				var sky = Sky.new()
 				var sky_material = PanoramaSkyMaterial.new()
 				sky_material.panorama = sky_texture
+				
+				# Use same energy for all platforms to ensure consistent brightness
+				sky_material.energy_multiplier = 1.8  # Same energy for both web and desktop
+				
 				sky.sky_material = sky_material
 				
-				# Apply to environment
+				# Apply to environment with enhanced settings
 				env.background_mode = Environment.BG_SKY
 				env.sky = sky
+				env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+				env.sky_custom_fov = 0.0  # Use full panorama
 				
 				print("✅ Applied environment sky texture: ", sky_texture_path)
 				return
@@ -382,6 +387,47 @@ func setup_environment_sky():
 	print("⚠️ Could not load environment sky texture")
 
 # Material creation functions moved to ModelLoader.gd
+
+func override_terrain_materials(terrain_scene: Node3D):
+	"""Modify existing materials in terrain scene to remove reflections while preserving textures"""
+	# Recursively find all MeshInstance3D nodes and modify their materials
+	var mesh_instances = find_all_mesh_instances(terrain_scene)
+	
+	for mesh_instance in mesh_instances:
+		if mesh_instance is MeshInstance3D:
+			# Try to modify existing materials instead of replacing them
+			modify_mesh_materials(mesh_instance)
+
+func modify_mesh_materials(mesh_instance: MeshInstance3D):
+	"""Modify materials on a mesh instance to remove reflections while preserving textures"""
+	if not mesh_instance.mesh:
+		return
+	
+	# Check all surface materials
+	for surface_idx in range(mesh_instance.mesh.get_surface_count()):
+		var material = mesh_instance.get_surface_override_material(surface_idx)
+		if not material:
+			material = mesh_instance.mesh.surface_get_material(surface_idx)
+		
+		if material and material is StandardMaterial3D:
+			# Modify the existing material properties to remove reflections
+			var std_material = material as StandardMaterial3D
+			std_material.roughness = 1.0  # Maximum roughness for no reflections
+			std_material.metallic = 0.0   # No metallic properties
+			std_material.specular = 0.0   # No specular highlights
+			# Keep all other properties (textures, colors, etc.) unchanged
+
+func find_all_mesh_instances(node: Node) -> Array:
+	"""Recursively find all MeshInstance3D nodes in a scene"""
+	var mesh_instances = []
+	
+	if node is MeshInstance3D:
+		mesh_instances.append(node)
+	
+	for child in node.get_children():
+		mesh_instances.append_array(find_all_mesh_instances(child))
+	
+	return mesh_instances
 
 func create_fallback_terrain(index: int, patch_size: float, terrain_z: float, start_offset: float = -50.0):
 	"""Create fallback terrain when .obj files can't be loaded"""
@@ -402,6 +448,11 @@ func create_fallback_terrain(index: int, patch_size: float, terrain_z: float, st
 	var texture_path = ModelLoader.get_terrain_texture_for_type(terrain_type)
 	var material = ModelLoader.create_material_with_texture(texture_path)
 	material.uv1_scale = Vector3(4.0, 4.0, 1.0)  # Tile the texture
+	
+	# Extra settings to eliminate reflections on terrain
+	material.roughness = 1.0  # Maximum roughness for no reflections
+	material.metallic = 0.0   # No metallic properties
+	material.specular = 0.0   # No specular highlights
 	terrain_instance.material_override = material
 	
 	terrain_container.add_child(terrain_instance)
@@ -435,6 +486,9 @@ func setup_terrain():
 			
 			# Rotate terrain to be horizontal
 			terrain_scene.rotation_degrees = Vector3(-90, 0, 180)
+			
+			# Override all materials in the terrain scene to remove reflections
+			override_terrain_materials(terrain_scene)
 			
 			terrain_container.add_child(terrain_scene)
 			terrain_patch_list.append(terrain_scene)

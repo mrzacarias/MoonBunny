@@ -17,8 +17,16 @@ var level_container_tween: Tween
 var menu_sound: AudioStream
 var pulse_tween: Tween
 
-# Original constants
-const ITEM_SPACING = 540.0  # 400 + 140px padding between items
+# Responsive constants - adjust based on viewport width
+func get_item_spacing() -> float:
+	var screen_width = get_viewport().size.x
+	# Scale item spacing based on screen width
+	# Original: 540px for 1280px screen (42% of screen width)
+	# For smaller screens, use a smaller percentage to fit better
+	if screen_width <= 960:
+		return screen_width * 0.35  # 35% of screen width for smaller screens
+	else:
+		return screen_width * 0.42  # 42% of screen width for larger screens
 
 # Font resource
 var moonbunny_font: FontFile
@@ -54,20 +62,22 @@ func _on_visibility_changed():
 func _setup_when_visible():
 	print("LevelSelect: _setup_when_visible called")
 	
-	# Adjust container size to accommodate horizontal scrolling
-	if level_container:
-		level_container.position = Vector2(0, 200)  # Full width, positioned below title
-		level_container.size = Vector2(get_viewport().size.x, 600)  # Full width, tall enough for items
+	# Title and container positioning is now handled by the scene file
+	# No need to override positioning here
 	
-	# Adjust arrow positions to be closer to screen edges
+	# Fix arrow positions to be properly visible and responsive
 	var screen_width = get_viewport().size.x
+	var screen_height = get_viewport().size.y
+	
 	if arrow_left:
-		arrow_left.position.x = 50  # 200px closer to left edge (was ~256px, now 50px)
+		arrow_left.position.x = 50  # Fixed distance from left edge
+		arrow_left.position.y = screen_height / 2 - 32  # Center vertically
 		arrow_left.size = Vector2(64, 64)
 		arrow_left.scale = Vector2(1.0, 1.0)
 	
 	if arrow_right:
-		arrow_right.position.x = screen_width - 114  # 200px closer to right edge (was ~1024px, now ~1166px)
+		arrow_right.position.x = screen_width - 114  # Fixed distance from right edge (64px width + 50px margin)
+		arrow_right.position.y = screen_height / 2 - 32  # Center vertically
 		arrow_right.size = Vector2(64, 64)
 		arrow_right.scale = Vector2(1.0, 1.0)
 	
@@ -120,32 +130,66 @@ func setup_level_items():
 		
 		# Create level item container (taller to fit text below image)
 		var level_item = Control.new()
-		level_item.size = Vector2(350, 500)  # Taller for text below
-		level_item.position.x = i * ITEM_SPACING
+		var item_width = get_item_spacing() * 0.65  # Item width is 65% of spacing
+		level_item.size = Vector2(item_width, 500)  # Responsive width, fixed height
+		level_item.position.x = i * get_item_spacing()
 		level_item.scale = Vector2(1.0, 1.0)  # Remove scaling temporarily to test positioning
 		
 		# Level image (512x362 scaled like original)
 		var level_texture = LevelResourceManager.get_level_image(level_name)
-		if level_texture:
-			var level_image = TextureRect.new()
-			level_image.texture = level_texture
-			level_image.size = Vector2(300, 212)  # Scaled from 512x362
-			level_image.position = Vector2(25, 20)
-			level_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		var image_width = item_width * 0.85  # Image is 85% of item width
+		var image_height = image_width * 0.707  # Maintain 512x362 aspect ratio (362/512 = 0.707)
+		var image_x = (item_width - image_width) / 2  # Center horizontally
+		
+		# Debug output to understand positioning
+		print("LevelSelect Debug - item_width: ", item_width, ", image_width: ", image_width, ", image_x: ", image_x)
+		
+		# Variables for text positioning (will be set based on actual image size)
+		var text_x: float
+		var text_width: float
+		
+		# Get texture from LevelResourceManager (works in web exports)
+		var texture = LevelResourceManager.get_level_image(level_name)
+		if texture:
+			var original_size = texture.get_size()
+			var target_size = Vector2(original_size.x * 0.84375, original_size.y * 0.84375)  # 0.84375 scaling from working version
+			
+			var level_image = NinePatchRect.new()
+			level_image.texture = texture
+			level_image.position = Vector2(image_x, 20)  # Use calculated position
+			level_image.size = target_size
 			level_item.add_child(level_image)
-			print("LevelSelect: Added image for level: ", level_name)
+			
+			print("LevelSelect: Image ", level_name, " - Original: ", original_size, " -> 84.375%: ", target_size)
+			print("LevelSelect: Image position: ", level_image.position, ", size: ", level_image.size)
+			print("LevelSelect: Image actual bounds: X=", level_image.position.x, " to ", level_image.position.x + level_image.size.x)
+			
+			# Set text positioning using the ACTUAL image size
+			var actual_image_width = target_size.x  # Use the actual target_size width
+			text_x = image_x  # Align with image left edge
+			text_width = actual_image_width  # Use full actual image width
+			
+			print("LevelSelect Debug - Using actual image width: ", actual_image_width)
+			print("LevelSelect Debug - Text positioning: X=", text_x, ", width=", text_width)
 		else:
-			# Placeholder
+			# Blue placeholder if no image
 			var placeholder = ColorRect.new()
-			placeholder.size = Vector2(300, 212)
-			placeholder.position = Vector2(25, 20)
+			placeholder.position = Vector2(image_x, 20)
+			placeholder.size = Vector2(image_width, image_height)
 			placeholder.color = Color(0.2, 0.3, 0.5, 1.0)
 			level_item.add_child(placeholder)
 			print("LevelSelect: Using placeholder for level: ", level_name)
+			
+			# For placeholder, use the calculated image_width
+			text_x = image_x
+			text_width = image_width
+			
+			print("LevelSelect Debug - Using placeholder width: ", image_width)
+			print("LevelSelect Debug - Text positioning: X=", text_x, ", width=", text_width)
 		
-		# Text positioning - much larger gap below the image (2x more)
-		# Image: Y=20 to Y=232 (height 212), add ~212px gap (full image height)
-		var text_y = 450  # Image ends at 232 + 212px gap = 444, round to 450
+		# Text positioning - closer to the image
+		# Image: Y=20 to Y=452 (height 432), reduce gap to bring text closer
+		var text_y = 400  # Image ends at 452, add smaller gap to bring text closer
 		var line_spacing = 35
 		
 		# Debug removed for cleaner output
@@ -154,12 +198,12 @@ func setup_level_items():
 		var title_str = level_data.get("TITLE", level_name.replace("_", " ").capitalize())
 		var title_label = Label.new()
 		title_label.text = title_str
-		title_label.position = Vector2(90, text_y)  # Move 90px right for better centering
-		title_label.size = Vector2(350, 35)  # Full container width for better centering
+		title_label.position = Vector2(text_x, text_y)  # Align with adjusted image position
+		title_label.size = Vector2(text_width, 35)  # Match adjusted text width for proper centering
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if moonbunny_font:
 			title_label.add_theme_font_override("font", moonbunny_font)
-		title_label.add_theme_font_size_override("font_size", 32)  # Much larger
+		title_label.add_theme_font_size_override("font_size", 38)  # 20% larger (32 * 1.2)
 		title_label.add_theme_color_override("font_color", Color.WHITE)
 		level_item.add_child(title_label)
 		text_y += line_spacing
@@ -169,12 +213,12 @@ func setup_level_items():
 			var artist_str = "by " + level_data["ARTIST"]
 			var artist_label = Label.new()
 			artist_label.text = artist_str
-			artist_label.position = Vector2(90, text_y)  # Move 90px right for better centering
-			artist_label.size = Vector2(350, 30)  # Full container width for better centering
+			artist_label.position = Vector2(text_x, text_y)  # Align with adjusted image position
+			artist_label.size = Vector2(text_width, 30)  # Match adjusted text width for proper centering
 			artist_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			if moonbunny_font:
 				artist_label.add_theme_font_override("font", moonbunny_font)
-			artist_label.add_theme_font_size_override("font_size", 24)  # Larger
+			artist_label.add_theme_font_size_override("font_size", 29)  # 20% larger (24 * 1.2)
 			artist_label.add_theme_color_override("font_color", Color.WHITE)
 			level_item.add_child(artist_label)
 			text_y += line_spacing
@@ -183,12 +227,12 @@ func setup_level_items():
 		var bpm_text = "BPM %.2f" % level_data.get("BPM", 120.0)
 		var bpm_label = Label.new()
 		bpm_label.text = bpm_text
-		bpm_label.position = Vector2(90, text_y)  # Move 90px right for better centering
-		bpm_label.size = Vector2(350, 30)  # Full container width for better centering
+		bpm_label.position = Vector2(text_x, text_y)  # Align with adjusted image position
+		bpm_label.size = Vector2(text_width, 30)  # Match adjusted text width for proper centering
 		bpm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if moonbunny_font:
 			bpm_label.add_theme_font_override("font", moonbunny_font)
-		bpm_label.add_theme_font_size_override("font_size", 26)
+		bpm_label.add_theme_font_size_override("font_size", 31)  # 20% larger (26 * 1.2)
 		bpm_label.add_theme_color_override("font_color", Color.WHITE)
 		level_item.add_child(bpm_label)
 		text_y += line_spacing
@@ -196,24 +240,24 @@ func setup_level_items():
 		# Add high score display like original (placeholder for now)
 		var max_rank_label = Label.new()
 		max_rank_label.text = "max rank A"  # TODO: Load from save data
-		max_rank_label.position = Vector2(90, text_y)  # Move 90px right for better centering
-		max_rank_label.size = Vector2(350, 25)  # Full container width for better centering
+		max_rank_label.position = Vector2(text_x, text_y)  # Align with adjusted image position
+		max_rank_label.size = Vector2(text_width, 25)  # Match adjusted text width for proper centering
 		max_rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if moonbunny_font:
 			max_rank_label.add_theme_font_override("font", moonbunny_font)
-		max_rank_label.add_theme_font_size_override("font_size", 24)
+		max_rank_label.add_theme_font_size_override("font_size", 29)  # 20% larger (24 * 1.2)
 		max_rank_label.add_theme_color_override("font_color", Color.WHITE)
 		level_item.add_child(max_rank_label)
 		text_y += line_spacing - 5  # Slightly closer spacing
 		
 		var hiscore_label = Label.new()
 		hiscore_label.text = "hiscore 39994"  # TODO: Load from save data
-		hiscore_label.position = Vector2(90, text_y)  # Move 90px right for better centering
-		hiscore_label.size = Vector2(350, 25)  # Full container width for better centering
+		hiscore_label.position = Vector2(text_x, text_y)  # Align with adjusted image position
+		hiscore_label.size = Vector2(text_width, 25)  # Match adjusted text width for proper centering
 		hiscore_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if moonbunny_font:
 			hiscore_label.add_theme_font_override("font", moonbunny_font)
-		hiscore_label.add_theme_font_size_override("font_size", 24)
+		hiscore_label.add_theme_font_size_override("font_size", 29)  # 20% larger (24 * 1.2)
 		hiscore_label.add_theme_color_override("font_color", Color.WHITE)
 		level_item.add_child(hiscore_label)
 		
@@ -242,8 +286,16 @@ func update_display():
 	level_container_tween = create_tween()
 	level_container_tween.set_parallel(true)
 	
-	# Center the current item properly - optimal centering at -280 offset
-	var target_x = -current_level_index * ITEM_SPACING + (get_viewport().size.x / 2 - 280)
+	# Center the current item properly - align with the "Select Level" title
+	var screen_width = get_viewport().size.x
+	var item_spacing = get_item_spacing()
+	var item_width = item_spacing * 0.65  # Item width is 65% of spacing
+	
+	# Center the current item: screen center minus half item width minus current item position
+	var screen_center = screen_width / 2
+	var current_item_position = current_level_index * item_spacing
+	var item_center_offset = item_width / 2
+	var target_x = screen_center - current_item_position - item_center_offset
 	level_container_tween.tween_property(level_container, "position:x", target_x, 0.2)
 	
 	# Reset all scales first - temporarily disable scaling

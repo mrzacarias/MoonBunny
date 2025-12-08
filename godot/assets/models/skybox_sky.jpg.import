@@ -3,10 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c73ug3unxbsxm"
-path.s3tc="res://.godot/imported/skybox_sky.jpg-af66d849d0d96c3928ffba62c12f79aa.s3tc.ctex"
+path="res://.godot/imported/skybox_sky.jpg-af66d849d0d96c3928ffba62c12f79aa.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "acf4eb6c7bdac7f22840fb36a88fdee1"
@@ -15,12 +14,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/skybox_sky.jpg"
-dest_files=["res://.godot/imported/skybox_sky.jpg-af66d849d0d96c3928ffba62c12f79aa.s3tc.ctex"]
+dest_files=["res://.godot/imported/skybox_sky.jpg-af66d849d0d96c3928ffba62c12f79aa.ctex"]
 
 [params]
 
-compress/mode=2
-compress/high_quality=false
+compress/mode=0
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
