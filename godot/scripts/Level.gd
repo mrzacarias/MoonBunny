@@ -559,19 +559,19 @@ func setup_rings():
 		var ring_time = ring_info.get("time", 0.0)
 		var button = ring_info.get("button", "A")
 		
-		# EXACT original MoonBunny formula: ringY = beat*self.RING_SPACING_PER_BEAT
-		# In original, "beat" is actually the cumulative time from parser
-		var ring_y = ring_time * RING_SPACING_PER_BEAT
+		# Use same formula as moonbunny_godot for consistency: time_to_position()
+		# This converts time to beats first, then to position
+		var ring_y = time_to_position(ring_time)
 		
 		# Calculate base position with proper normalization to keep rings in bounds
-		# Use the full fly area without accounting for ring radius for more spread
-		var safe_area_x = FLY_AREA_R  # 2.5 (full area)
-		var safe_area_z = FLY_AREA_T  # 2.0 (full area)
+		# Use expanded area bounds to allow rings closer to the edges (match moonbunny_godot)
+		var safe_area_x = FLY_AREA_R * 0.95  # 2.375 (95% of full area to allow maximum spread)
+		var safe_area_z = abs(FLY_AREA_T - FLY_AREA_B) / 2.0 * 0.95  # 1.9 (95% of Z range for maximum spread)
 		
 		# Normalize the position to fit within bounds
-		# First, scale the position to use more of the available space
-		var scaled_x = pos.x * 2.0  # Scale up for more spread
-		var scaled_z = pos.y * 2.0  # Scale up for more spread
+		# First, scale the position to use more of the available space (match moonbunny_godot)
+		var scaled_x = pos.x * 7.0  # Scale up for more spread (increased to match moonbunny_godot)
+		var scaled_z = pos.y * 7.0  # Scale up for more spread (increased to match moonbunny_godot)
 		
 		# Then clamp to area bounds
 		var base_x = clamp(scaled_x, -safe_area_x, safe_area_x)
@@ -594,7 +594,7 @@ func setup_rings():
 		ring_instance.position = Vector3(
 			base_x,  # X = left/right
 			ring_y,  # Y = forward
-			base_z - 2.5   # Z = up/down - adjusted to match bunny height (-10)
+			(FLY_AREA_T + FLY_AREA_B) / 2.0 + base_z   # Z = up/down - centered in fly area (match moonbunny_godot)
 		)
 		
 		
@@ -609,11 +609,11 @@ func setup_rings():
 		# But "beat" was actually time, so time*BEAT_DELAY = time*(60/BPM) = time*beat_delay
 		ring_list.append({
 			"node": ring_instance,
-			"time": ring_time * beat_delay,  # Match original: time*BEAT_DELAY
+			"time": ring_time,  # Use ring_time directly (already in seconds, like moonbunny_godot)
 			"button": button,
 			"cleared": false,
 			"position": pos,  # Original normalized position for reference
-			"world_position": Vector2(base_x, base_z - 2.5)  # Actual world position for collision detection (with Z offset)
+			"world_position": Vector2(base_x, (FLY_AREA_T + FLY_AREA_B) / 2.0 + base_z)  # Actual world position for collision detection
 		})
 		
 		# Add button to button viewer (timeline at bottom)
@@ -681,6 +681,7 @@ func load_ring_data() -> Array:
 			"button": button,
 			"time": cumulative_time
 		})
+		
 	
 	print("Loaded ", ring_data.size(), " rings from resource manager")
 	return ring_data
@@ -1005,6 +1006,8 @@ func check_next_ring(music_time: float):
 	# Check if ring is missed - EXACT original logic (with timing offset)
 	# Original: if ring["time"] - pos < -0.11: (where pos = self.music.getTime())
 	var adjusted_music_time = music_time + timing_offset
+	
+	
 	if ring["time"] - adjusted_music_time < -0.11:
 		if not ring["cleared"]:
 			# Miss!
@@ -1175,6 +1178,7 @@ func check_button_press(button: String):
 	# Apply timing offset for hit detection synchronization
 	var adjusted_music_time = music_time + timing_offset
 	var time_diff = abs(ring["time"] - adjusted_music_time)
+	
 	
 	# Check if correct button and within timing window
 	if ring["button"] == button and not ring["cleared"]:

@@ -9,25 +9,73 @@ var level_music: Dictionary = {}
 var level_headers: Dictionary = {}
 var level_rings: Dictionary = {}
 
-# Available levels
-var available_levels: Array[String] = [
-	"7stars",
-	"bang_bang", 
-	"green_hill_zone",
-	"magic_love",
-	"mirrors_edge",
-	"rirura_2",
-	"training"
-]
+# Available levels (automatically detected, excluding training)
+var available_levels: Array[String] = []
 
 func _ready():
 	print("LevelResourceManager: Initializing")
+	discover_available_levels()
 	preload_all_resources()
+
+func discover_available_levels():
+	"""Automatically discover available levels from the levels directory, excluding training"""
+	available_levels.clear()
+	
+	var levels_dir = DirAccess.open("res://assets/levels/")
+	if levels_dir:
+		levels_dir.list_dir_begin()
+		var dir_name = levels_dir.get_next()
+		
+		while dir_name != "":
+			# Check if it's a directory and not a special entry
+			if levels_dir.current_is_dir() and not dir_name.begins_with("."):
+				# Exclude training level (handled separately by main menu)
+				if dir_name != "training":
+					# Verify it has the required files (header.lvl and music file)
+					var level_path = "res://assets/levels/" + dir_name + "/"
+					if FileAccess.file_exists(level_path + "header.lvl"):
+						# Check for music file (could be .mp3 or other formats)
+						var has_music = false
+						var music_extensions = [".mp3", ".ogg", ".wav"]
+						for ext in music_extensions:
+							if FileAccess.file_exists(level_path + dir_name + ext):
+								has_music = true
+								break
+						
+						if has_music:
+							available_levels.append(dir_name)
+							print("LevelResourceManager: Discovered level: ", dir_name)
+						else:
+							print("LevelResourceManager: Skipping ", dir_name, " - no music file found")
+					else:
+						print("LevelResourceManager: Skipping ", dir_name, " - no header.lvl found")
+			
+			dir_name = levels_dir.get_next()
+		
+		levels_dir.list_dir_end()
+	else:
+		print("LevelResourceManager: Could not open levels directory, falling back to hardcoded list")
+		# Fallback to hardcoded list (excluding training)
+		available_levels = [
+			"7stars",
+			"bang_bang", 
+			"green_hill_zone",
+			"mirrors_edge",
+			"rirura_2"
+		]
+	
+	# Sort levels alphabetically for consistent ordering
+	available_levels.sort()
+	print("LevelResourceManager: Available levels: ", available_levels)
 
 func preload_all_resources():
 	"""Preload all level resources for HTML export compatibility"""
 	print("LevelResourceManager: Preloading all level resources")
 	
+	# Always preload training level for main menu access
+	preload_level_resources("training")
+	
+	# Preload discovered levels
 	for level_name in available_levels:
 		preload_level_resources(level_name)
 
@@ -94,6 +142,7 @@ func get_level_rings(level_name: String) -> String:
 	return level_rings.get(level_name, "")
 
 func get_available_levels() -> Array[String]:
+	"""Get list of available levels for level select (excludes training level)"""
 	return available_levels
 
 func get_fallback_header(level_name: String) -> String:
@@ -106,7 +155,9 @@ func get_fallback_header(level_name: String) -> String:
 		"green_hill_zone":
 			return "MUSIC_FILE=green_hill_zone.mp3\nTITLE=Green Hill Zone\nARTIST=Masato Nakamura\nBPM=150\nDIFFICULTIES=Normal"
 		"magic_love":
-			return "MUSIC_FILE=magic_love.mp3\nTITLE=magic_love\nARTIST=unknown\nBPM=108\nDIFFICULTIES=Normal"
+			return "MUSIC_FILE=magic_love.mp3\nTITLE=Magic Love\nARTIST=Unknown\nBPM=108\nDIFFICULTIES=Normal"
+		"rain_of_love":
+			return "MUSIC_FILE=rain_of_love.mp3\nTITLE=Rain of Love\nARTIST=Unknown\nBPM=120\nDIFFICULTIES=Normal"
 		"mirrors_edge":
 			return "MUSIC_FILE=mirrors_edge.mp3\nTITLE=Still Alive - Mirror's Edge Theme\nARTIST=Lisa Miskovsky\nBPM=107\nDIFFICULTIES=Normal"
 		"rirura_2":
