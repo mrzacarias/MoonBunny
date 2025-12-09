@@ -165,7 +165,7 @@ func setup_audio():
 	
 	# Load sound effects
 	miss_sound = AudioStreamPlayer.new()
-	var miss_stream = load("res://assets/sounds/miss.wav")
+	var miss_stream = load("res://assets/sounds/miss.ogg")
 	if miss_stream:
 		miss_sound.stream = miss_stream
 		AudioManager.apply_standard_volume(miss_sound, "sfx")
@@ -173,7 +173,7 @@ func setup_audio():
 	
 	# Load start level sound
 	start_level_sound = AudioStreamPlayer.new()
-	var start_stream = load("res://assets/sounds/start_level.wav")
+	var start_stream = load("res://assets/sounds/start_level.ogg")
 	if start_stream:
 		start_level_sound.stream = start_stream
 		AudioManager.apply_standard_volume(start_level_sound, "sfx")
@@ -489,7 +489,11 @@ func create_fallback_terrain(index: int, patch_size: float, terrain_z: float, st
 
 func setup_terrain():
 	"""Setup terrain patches like original"""
-	const TERRAIN_PATCHES = 30  # More patches for better draw distance
+	# Reduce terrain patches for web performance
+	var terrain_patches = 30
+	if OS.get_name() == "Web":
+		terrain_patches = 20  # Reduce by 33% for web
+	
 	const TERRAIN_Z = -15.0
 	var terrain_patch_size = TERRAIN_PATCH_SIZE  # Use consistent size for GLB files
 	
@@ -497,7 +501,7 @@ func setup_terrain():
 	# Player starts at Y=0, camera at Y=-2.5, so we need terrain to start before that
 	var terrain_start_offset = -50.0  # Start terrain well before player position
 	
-	for i in range(TERRAIN_PATCHES):
+	for i in range(terrain_patches):
 		# Use all 8 terrain types cycling through them
 		var terrain_index = (i % 8) + 1
 		

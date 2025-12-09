@@ -74,14 +74,20 @@ func discover_available_levels():
 	available_levels.sort()
 
 func preload_all_resources():
-	"""Preload all level resources for HTML export compatibility"""
+	"""Preload level resources - optimized for web performance"""
 	
 	# Always preload training level for main menu access
 	preload_level_resources("training")
 	
-	# Preload discovered levels
-	for level_name in available_levels:
-		preload_level_resources(level_name)
+	# For web, only preload metadata, not music files
+	if OS.get_name() == "Web":
+		for level_name in available_levels:
+			preload_level_metadata_only(level_name)
+		print("Web optimization: Music files will be loaded on-demand")
+	else:
+		# Desktop: preload everything
+		for level_name in available_levels:
+			preload_level_resources(level_name)
 
 func preload_level_resources(level_name: String):
 	"""Preload all resources for a specific level"""
@@ -94,14 +100,20 @@ func preload_level_resources(level_name: String):
 	else:
 		print("ERROR: Failed to load level image: ", image_path)
 	
-	# Preload music
-	var music_path = "res://assets/levels/" + level_name + "/" + level_name + ".mp3"
+	# Preload music (try OGG first, fallback to MP3)
+	var music_path = "res://assets/levels/" + level_name + "/" + level_name + ".ogg"
+	if not ResourceLoader.exists(music_path):
+		music_path = "res://assets/levels/" + level_name + "/" + level_name + ".mp3"
 	var music = load(music_path)
 	if music:
 		level_music[level_name] = music
 	else:
 		print("ERROR: Failed to load music file: ", music_path)
 	
+	load_level_text_data(level_name)
+
+func load_level_text_data(level_name: String):
+	"""Load header and ring data for a level"""
 	# Load .json files - Godot automatically imports these as resources for HTML compatibility
 	var header_path = "res://assets/levels/" + level_name + "/header.json"
 	var ring_path = "res://assets/levels/" + level_name + "/Normal.json"
@@ -149,7 +161,43 @@ func get_level_image(level_name: String) -> Texture2D:
 	return level_images.get(level_name, null)
 
 func get_level_music(level_name: String) -> AudioStream:
+	# Check if already loaded
+	if level_music.has(level_name):
+		return level_music[level_name]
+	
+	# For web, load on-demand
+	if OS.get_name() == "Web":
+		return load_music_on_demand(level_name)
+	
 	return level_music.get(level_name, null)
+
+func load_music_on_demand(level_name: String) -> AudioStream:
+	"""Load music file on-demand for web performance"""
+	var music_path = "res://assets/levels/" + level_name + "/" + level_name + ".ogg"
+	if not ResourceLoader.exists(music_path):
+		music_path = "res://assets/levels/" + level_name + "/" + level_name + ".mp3"
+	var music = load(music_path)
+	if music:
+		level_music[level_name] = music
+		print("Loaded music on-demand: ", level_name)
+		return music
+	else:
+		print("ERROR: Failed to load music on-demand: ", music_path)
+		return null
+
+func preload_level_metadata_only(level_name: String):
+	"""Preload only metadata (images, headers, rings) - not music"""
+	
+	# Preload images
+	var image_path = "res://assets/levels/" + level_name + "/image.png"
+	var texture = load(image_path)
+	if texture:
+		level_images[level_name] = texture
+	else:
+		print("ERROR: Failed to load level image: ", image_path)
+	
+	# Load headers and rings (small files)
+	load_level_text_data(level_name)
 
 func get_level_header(level_name: String) -> String:
 	return level_headers.get(level_name, "")

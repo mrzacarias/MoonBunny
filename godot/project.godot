@@ -20,6 +20,7 @@ config/icon="res://icon.png"
 
 LevelResourceManager="*res://scripts/LevelResourceManager.gd"
 HighScoreManager="*res://scripts/HighScoreManager.gd"
+PerformanceManager="*res://scripts/PerformanceManager.gd"
 
 [debug]
 
@@ -103,6 +104,6 @@ button_d={
 
 textures/canvas_textures/default_texture_filter=2
 textures/vram_compression/import_etc2_astc=true
-anti_aliasing/quality/msaa_3d=2
+anti_aliasing/quality/msaa_3d=0
 environment/defaults/default_clear_color=Color(0.25, 0.8, 0.97, 1)
-anti_aliasing/quality/screen_space_aa=1
+anti_aliasing/quality/screen_space_aa=0

@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/LevelSelect.tscn" id="4_levelselect"]
 [ext_resource type="PackedScene" path="res://scenes/GameplayUI.tscn" id="5_gameplayui"]
 [ext_resource type="PackedScene" uid="uid://bk8xj9xyqhqhl" path="res://scenes/ResultScreen.tscn" id="6_resultscreen"]
-[ext_resource type="AudioStream" uid="uid://514el7jwwhvg" path="res://assets/sounds/always.wav" id="7_menu_music"]
+[ext_resource type="AudioStream" uid="uid://514el7jwwhvg" path="res://assets/sounds/always.ogg" id="7_menu_music"]
 
 [node name="Main" type="Control"]
 layout_mode = 3

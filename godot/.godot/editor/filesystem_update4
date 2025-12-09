@@ -1,4 +1,5 @@
 res://scripts/LevelResourceManager.gd
+res://scripts/PerformanceManager.gd
 res://scripts/Level.gd
 res://scripts/LevelSelect.gd
 res://scripts/MainMenu.gd

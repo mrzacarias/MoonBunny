@@ -35,7 +35,7 @@ func _ready():
 	moonbunny_font = load("res://assets/fonts/HUM521BC.TTF")
 	
 	# Load menu sound
-	menu_sound = load("res://assets/sounds/menu.wav")
+	menu_sound = load("res://assets/sounds/menu.ogg")
 	
 	# Calculate responsive sizes based on viewport
 	calculate_responsive_sizes()

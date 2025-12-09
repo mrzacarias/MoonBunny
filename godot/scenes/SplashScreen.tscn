@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/SplashScreen.gd" id="1_splash"]
 [ext_resource type="Texture2D" uid="uid://bvmmlm3oc5sgu" path="res://assets/textures/tromba_logo.png" id="2_logo"]
-[ext_resource type="AudioStream" uid="uid://nn6cr04xnd46" path="res://assets/sounds/elefante.wav" id="3_splash_sound"]
+[ext_resource type="AudioStream" uid="uid://nn6cr04xnd46" path="res://assets/sounds/elefante.ogg" id="3_splash_sound"]
 
 [node name="SplashScreen" type="Control"]
 layout_mode = 3

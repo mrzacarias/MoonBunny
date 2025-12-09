@@ -31,7 +31,7 @@ var moonbunny_font: FontFile
 
 func _ready():
 	# Load menu sound
-	menu_sound = load("res://assets/sounds/menu.wav")
+	menu_sound = load("res://assets/sounds/menu.ogg")
 	
 	# Load font directly from TTF
 	moonbunny_font = load("res://assets/fonts/HUM521BC.TTF")
