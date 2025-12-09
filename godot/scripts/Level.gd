@@ -216,52 +216,36 @@ func setup_bunny_actor():
 	
 	var bunny_scene_or_mesh = ModelLoader.load_model_with_materials(bunny_mesh_path, bunny_texture_path)
 	
-	if bunny_scene_or_mesh == null:
-		# Fallback to capsule mesh
-		var mesh_instance = MeshInstance3D.new()
-		var capsule_mesh = CapsuleMesh.new()
-		capsule_mesh.radius = 0.3
-		capsule_mesh.height = 0.6
-		mesh_instance.mesh = capsule_mesh
+	if bunny_scene_or_mesh:
+		# GLB scene loaded successfully
+		bunny_actor.add_child(bunny_scene_or_mesh)
 		
-		# Apply fallback material
-		var fallback_material = StandardMaterial3D.new()
-		fallback_material.albedo_color = Color(1.0, 0.95, 0.9, 1.0)  # Slightly brighter bunny-like color for web
-		fallback_material.roughness = 0.4
-		fallback_material.metallic = 0.0
-		mesh_instance.material_override = fallback_material
+		# Override bunny materials for HTML brightness
+		override_bunny_materials(bunny_scene_or_mesh)
 		
-		bunny_actor.add_child(mesh_instance)
+		# Setup ear animation controller if we have animations
+		var animation_player = ModelLoader.find_animation_player(bunny_scene_or_mesh)
+		var skeleton = ModelLoader.find_skeleton(bunny_scene_or_mesh)
+		
+		if animation_player or skeleton:
+			var ear_controller = preload("res://scripts/EarAnimationController.gd").new()
+			ear_controller.name = "EarAnimationController"
+			ear_controller.animation_player = animation_player
+			ear_controller.skeleton = skeleton
+			
+			# Configure ear animation settings for alternating wave effect
+			ear_controller.wave_frequency = 10.0  # 10Hz alternating wave frequency
+			ear_controller.wave_amplitude = 0.05  # Small but visible amplitude
+			
+			bunny_scene_or_mesh.add_child(ear_controller)
+			
+			# Store reference for later use
+			bunny_actor.set_meta("ear_controller", ear_controller)
+			
+			# Start wind animation if available
+			ear_controller.play_wind_animation()
 	else:
-		# Check if we got a full scene (GLB) or just a mesh (OBJ fallback)
-		if bunny_scene_or_mesh is Node3D and bunny_scene_or_mesh.get_child_count() > 0:
-			# This is a full GLB scene with potential animations
-			bunny_actor.add_child(bunny_scene_or_mesh)
-			
-			# Setup ear animation controller if we have animations
-			var animation_player = ModelLoader.find_animation_player(bunny_scene_or_mesh)
-			var skeleton = ModelLoader.find_skeleton(bunny_scene_or_mesh)
-			
-			if animation_player or skeleton:
-				var ear_controller = preload("res://scripts/EarAnimationController.gd").new()
-				ear_controller.name = "EarAnimationController"
-				ear_controller.animation_player = animation_player
-				ear_controller.skeleton = skeleton
-				
-				# Configure ear animation settings for alternating wave effect
-				ear_controller.wave_frequency = 10.0  # 10Hz alternating wave frequency
-				ear_controller.wave_amplitude = 0.05  # Small but visible amplitude
-				
-				bunny_scene_or_mesh.add_child(ear_controller)
-				
-				# Store reference for later use
-				bunny_actor.set_meta("ear_controller", ear_controller)
-				
-				# Start wind animation if available
-				ear_controller.play_wind_animation()
-		else:
-			# This is just a MeshInstance3D (OBJ fallback or simple mesh)
-			bunny_actor.add_child(bunny_scene_or_mesh)
+		print("ERROR: Could not load bunny GLB file!")
 	
 	# Add custom properties like original
 	bunny_actor.set_meta("speed", Vector3.ZERO)
@@ -425,6 +409,16 @@ func override_terrain_materials(terrain_scene: Node3D):
 			# Try to modify existing materials instead of replacing them
 			modify_mesh_materials(mesh_instance)
 
+func override_bunny_materials(bunny_scene: Node3D):
+	"""Modify existing materials in bunny scene for HTML brightness"""
+	# Recursively find all MeshInstance3D nodes and modify their materials
+	var mesh_instances = find_all_mesh_instances(bunny_scene)
+	
+	for mesh_instance in mesh_instances:
+		if mesh_instance is MeshInstance3D:
+			# Apply HTML brightness adjustment to bunny materials
+			modify_bunny_mesh_materials(mesh_instance)
+
 func modify_mesh_materials(mesh_instance: MeshInstance3D):
 	"""Modify materials on a mesh instance to remove reflections while preserving textures"""
 	if not mesh_instance.mesh:
@@ -441,8 +435,45 @@ func modify_mesh_materials(mesh_instance: MeshInstance3D):
 			var std_material = material as StandardMaterial3D
 			std_material.roughness = 1.0  # Maximum roughness for no reflections
 			std_material.metallic = 0.0   # No metallic properties
-			# Note: specular property removed in Godot 4.x - controlled by roughness and metallic
-			# Keep all other properties (textures, colors, etc.) unchanged
+			
+			# Apply HTML brightness adjustment for terrain
+			if OS.get_name() == "Web":
+				# Darken the albedo color by 10% for HTML (was 30%, now 20% brighter)
+				var current_color = std_material.albedo_color
+				std_material.albedo_color = Color(
+					current_color.r * 0.9,
+					current_color.g * 0.9, 
+					current_color.b * 0.9,
+					current_color.a
+				)
+			
+			# Add depth bias to prevent z-fighting between terrain patches
+			std_material.depth_offset_enabled = true
+			std_material.depth_offset_bias = randf_range(-0.001, 0.001)  # Small random depth bias
+
+func modify_bunny_mesh_materials(mesh_instance: MeshInstance3D):
+	"""Modify materials on bunny mesh instance for HTML brightness"""
+	if not mesh_instance.mesh:
+		return
+	
+	# Check all surface materials
+	for surface_idx in range(mesh_instance.mesh.get_surface_count()):
+		var material = mesh_instance.get_surface_override_material(surface_idx)
+		if not material:
+			material = mesh_instance.mesh.surface_get_material(surface_idx)
+		
+		if material and material is StandardMaterial3D:
+			# Apply HTML brightness adjustment for bunny
+			if OS.get_name() == "Web":
+				var std_material = material as StandardMaterial3D
+				# Darken the albedo color by 30% for HTML
+				var current_color = std_material.albedo_color
+				std_material.albedo_color = Color(
+					current_color.r * 0.7,
+					current_color.g * 0.7, 
+					current_color.b * 0.7,
+					current_color.a
+				)
 
 func find_all_mesh_instances(node: Node) -> Array:
 	"""Recursively find all MeshInstance3D nodes in a scene"""
@@ -455,35 +486,6 @@ func find_all_mesh_instances(node: Node) -> Array:
 		mesh_instances.append_array(find_all_mesh_instances(child))
 	
 	return mesh_instances
-
-func create_fallback_terrain(index: int, patch_size: float, terrain_z: float, start_offset: float = -50.0):
-	"""Create fallback terrain when .obj files can't be loaded"""
-	var terrain_mesh = PlaneMesh.new()
-	terrain_mesh.size = Vector2(40, 40)
-	terrain_mesh.subdivide_width = 20  # More subdivisions for better detail
-	terrain_mesh.subdivide_depth = 20
-	
-	var terrain_instance = MeshInstance3D.new()
-	terrain_instance.mesh = terrain_mesh
-	
-	# Position and rotate to be horizontal with proper start offset
-	terrain_instance.position = Vector3(0, start_offset + patch_size * index - 0.1, terrain_z)
-	terrain_instance.rotation_degrees = Vector3(-90, 0, 0)
-	
-	# Create material with textures using ModelLoader
-	var terrain_type = (index % 8) + 1
-	var texture_path = ModelLoader.get_terrain_texture_for_type(terrain_type)
-	var material = ModelLoader.create_material_with_texture(texture_path)
-	material.uv1_scale = Vector3(4.0, 4.0, 1.0)  # Tile the texture
-	
-	# Extra settings to eliminate reflections on terrain
-	material.roughness = 1.0  # Maximum roughness for no reflections
-	material.metallic = 0.0   # No metallic properties
-	# Note: specular property removed in Godot 4.x - controlled by roughness and metallic
-	terrain_instance.material_override = material
-	
-	terrain_container.add_child(terrain_instance)
-	terrain_patch_list.append(terrain_instance)
 
 # Lighting is now set up in the Level.tscn scene file
 
@@ -505,15 +507,17 @@ func setup_terrain():
 		# Use all 8 terrain types cycling through them
 		var terrain_index = (i % 8) + 1
 		
-		# Use ModelLoader to load terrain (tries GLB first, then OBJ fallback)
+		# Use ModelLoader to load terrain GLB files
 		var terrain_scene = ModelLoader.load_mesh_only("res://assets/models/terrain_%d" % terrain_index)
 		
 		if terrain_scene:
-			# For GLB files, we want to preserve all meshes, so add the complete scene
+			# GLB terrain loaded successfully - preserve all meshes
 			# This ensures floating mountains and other terrain details are included
 			
 			# Position terrain to start before player position and extend forward
-			terrain_scene.position = Vector3(0, terrain_start_offset + terrain_patch_size * i - 0.1, TERRAIN_Z)
+			# Add small random Z offset to prevent z-fighting between patches
+			var z_offset = randf_range(-0.05, 0.05)
+			terrain_scene.position = Vector3(0, terrain_start_offset + terrain_patch_size * i, TERRAIN_Z + z_offset)
 			
 			# Rotate terrain to be horizontal
 			terrain_scene.rotation_degrees = Vector3(-90, 0, 180)
@@ -524,8 +528,7 @@ func setup_terrain():
 			terrain_container.add_child(terrain_scene)
 			terrain_patch_list.append(terrain_scene)
 		else:
-			# Use fallback if loading failed
-			create_fallback_terrain(i, terrain_patch_size, TERRAIN_Z, terrain_start_offset)
+			print("ERROR: Could not load terrain GLB file: terrain_%d" % terrain_index)
 
 func setup_gui():
 	"""Setup GUI elements like original gui.py"""
@@ -1082,8 +1085,9 @@ func update_terrain_patches(_music_time: float):
 		var last_patch = terrain_patch_list[-1]
 		var safe_patch_size = TERRAIN_PATCH_SIZE  # For GLB files
 		
-		# Move closest patch to the end
-		closest_patch.position.y = last_patch.position.y + safe_patch_size - 0.1
+		# Move closest patch to the end with proper spacing and random Z offset to prevent z-fighting
+		var z_offset = randf_range(-0.05, 0.05)
+		closest_patch.position = Vector3(0, last_patch.position.y + safe_patch_size, -15.0 + z_offset)
 		
 		# Rotate the list
 		terrain_patch_list.append(terrain_patch_list.pop_front())

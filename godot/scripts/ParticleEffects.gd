@@ -38,8 +38,11 @@ class RingHitParticles extends GPUParticles3D:
 		material.scale_min = 0.03
 		material.scale_max = 0.1
 		
-		# Color (like original blue particles)
-		material.color = Color(0.4, 0.4, 1.0, 0.8)
+		# Color (like original blue particles) - adjusted for HTML
+		var base_color = Color(0.4, 0.4, 1.0, 0.8)
+		if OS.get_name() == "Web":
+			base_color = Color(base_color.r * 0.7, base_color.g * 0.7, base_color.b * 0.7, base_color.a)  # 30% darker for HTML
+		material.color = base_color
 		
 		process_material = material
 		
@@ -96,22 +99,27 @@ class RingHitParticles extends GPUParticles3D:
 		global_position = position
 		
 		# Adjust particle count based on judgement quality
+		# HTML brightness adjustment
+		var brightness_multiplier = 1.0
+		if OS.get_name() == "Web":
+			brightness_multiplier = 0.7  # 30% darker for HTML
+		
 		match judgement:
 			"PERFECT":
 				amount = 100
-				(process_material as ParticleProcessMaterial).color = Color(1.0, 0.8, 0.0, 0.9)  # Gold
+				(process_material as ParticleProcessMaterial).color = Color(1.0, 0.8, 0.0, 0.9) * brightness_multiplier  # Gold
 			"GOOD":
 				amount = 75
-				(process_material as ParticleProcessMaterial).color = Color(0.0, 1.0, 0.0, 0.8)  # Green
+				(process_material as ParticleProcessMaterial).color = Color(0.0, 1.0, 0.0, 0.8) * brightness_multiplier  # Green
 			"OK":
 				amount = 50
-				(process_material as ParticleProcessMaterial).color = Color(1.0, 1.0, 0.0, 0.7)  # Yellow
+				(process_material as ParticleProcessMaterial).color = Color(1.0, 1.0, 0.0, 0.7) * brightness_multiplier  # Yellow
 			"BAD":
 				amount = 25
-				(process_material as ParticleProcessMaterial).color = Color(1.0, 0.5, 0.0, 0.6)  # Orange
+				(process_material as ParticleProcessMaterial).color = Color(1.0, 0.5, 0.0, 0.6) * brightness_multiplier  # Orange
 			_:
 				amount = 10
-				(process_material as ParticleProcessMaterial).color = Color(0.5, 0.5, 0.5, 0.5)  # Gray
+				(process_material as ParticleProcessMaterial).color = Color(0.5, 0.5, 0.5, 0.5) * brightness_multiplier  # Gray
 		
 		# Start emission
 		restart()
@@ -148,7 +156,11 @@ class MissParticles extends GPUParticles3D:
 		material.gravity = Vector3(0, -9.8, 0)
 		
 		# Dark red/gray color
-		material.color = Color(0.6, 0.2, 0.2, 0.7)
+		# Color adjusted for HTML
+		var base_color = Color(0.6, 0.2, 0.2, 0.7)
+		if OS.get_name() == "Web":
+			base_color = Color(base_color.r * 0.7, base_color.g * 0.7, base_color.b * 0.7, base_color.a)  # 30% darker for HTML
+		material.color = base_color
 		
 		# Smaller scale
 		material.scale_min = 0.02

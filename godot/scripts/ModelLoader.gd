@@ -5,9 +5,9 @@ class_name ModelLoader
 # This compensates for the texture loss during .egg to .obj conversion
 
 static func load_model_with_materials(model_path: String, texture_path: String = "") -> Node3D:
-	"""Load a model (.glb preferred, .obj fallback) and apply proper materials"""
+	"""Load a GLB model with embedded materials and animations"""
 	
-	# Try .glb first (has embedded materials and animations)
+	# Ensure .glb extension
 	var glb_path = model_path
 	if not glb_path.ends_with(".glb"):
 		glb_path = model_path.get_basename() + ".glb"
@@ -29,28 +29,6 @@ static func load_model_with_materials(model_path: String, texture_path: String =
 				
 			# Return the entire scene to preserve animations and skeleton
 			return scene_instance
-	
-	# Fallback to .obj file (if it exists)
-	var obj_path = model_path.get_basename() + ".obj"
-	if ResourceLoader.exists(obj_path):
-		var mesh_instance = MeshInstance3D.new()
-		var mesh = load(obj_path)
-		if mesh and mesh is Mesh:
-			mesh_instance.mesh = mesh
-			
-			# Apply material with texture if provided
-			if texture_path != "":
-				var material = create_material_with_texture(texture_path)
-				mesh_instance.material_override = material
-			else:
-				# Apply default material for .obj files that don't have embedded materials
-				var default_material = StandardMaterial3D.new()
-				default_material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)
-				default_material.roughness = 0.6
-				default_material.metallic = 0.0
-				mesh_instance.material_override = default_material
-			
-			return mesh_instance
 	
 	return null
 
@@ -94,15 +72,20 @@ static func create_material_with_texture(texture_path: String) -> StandardMateri
 	"""Create a StandardMaterial3D with the specified texture"""
 	var material = StandardMaterial3D.new()
 	
+	# Platform-specific brightness adjustment
+	var brightness_multiplier = 1.0
+	if OS.get_name() == "Web":
+		brightness_multiplier = 0.7  # 30% darker for HTML
+	
 	if ResourceLoader.exists(texture_path):
 		var texture = load(texture_path)
 		if texture:
 			material.albedo_texture = texture
-			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # Full white to show texture
+			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0) * brightness_multiplier  # Adjusted for web
 		else:
-			material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)  # Fallback gray
+			material.albedo_color = Color(0.8, 0.8, 0.8, 1.0) * brightness_multiplier  # Fallback gray
 	else:
-		material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)  # Fallback gray
+		material.albedo_color = Color(0.8, 0.8, 0.8, 1.0) * brightness_multiplier  # Fallback gray
 	
 	# Set good default material properties for Godot 4.x
 	material.roughness = 1.0  # Maximum roughness to eliminate reflections
@@ -129,23 +112,30 @@ static func create_ring_material(button: String) -> StandardMaterial3D:
 	# Platform-specific brightness adjustment
 	var brightness_multiplier = 1.0
 	if OS.get_name() == "Web":
-		brightness_multiplier = 0.6  # 40% darker for HTML (was 0.8, now 0.6 for additional 20% reduction)
+		brightness_multiplier = 0.42  # 58% darker for HTML (0.6 * 0.7 = 0.42 for additional 30% reduction)
+	
+	# Additional 30% darkness for HTML (separate from emission brightness)
+	var albedo_multiplier = 1.0
+	if OS.get_name() == "Web":
+		albedo_multiplier = 0.7  # 30% darker albedo for HTML
 	
 	match button:
 		"A": 
-			material.albedo_color = Color(0.4, 0.3, 0.8, 1.0)  # Purple/Blue (from cross texture)
+			material.albedo_color = Color(0.4, 0.3, 0.8, 1.0) * albedo_multiplier  # Purple/Blue
 			material.emission = Color(0.2, 0.15, 0.4, 1.0) * brightness_multiplier
 		"B": 
-			material.albedo_color = Color(0.6, 0.2, 0.2, 1.0)  # Dark Red/Maroon (from circle texture - right position)
+			material.albedo_color = Color(0.6, 0.2, 0.2, 1.0) * albedo_multiplier  # Dark Red/Maroon
 			material.emission = Color(0.3, 0.1, 0.1, 1.0) * brightness_multiplier
 		"C": 
-			material.albedo_color = Color(0.8, 0.3, 0.8, 1.0)  # Purple/Magenta (from square texture - left position)
+			material.albedo_color = Color(0.8, 0.3, 0.8, 1.0) * albedo_multiplier  # Purple/Magenta
 			material.emission = Color(0.4, 0.15, 0.4, 1.0) * brightness_multiplier
 		"D": 
-			material.albedo_color = Color(0.3, 0.8, 0.3, 1.0)  # Green (from triangle texture)
-			material.emission = Color(0.15, 0.4, 0.15, 1.0) * brightness_multiplier
+			# D ring gets additional 30% darkness on top of HTML darkness (0.7 * 0.7 = 0.49)
+			var d_multiplier = albedo_multiplier * 0.7  # Extra 30% darker for D ring
+			material.albedo_color = Color(0.3, 0.8, 0.3, 1.0) * d_multiplier  # Green extra dark
+			material.emission = Color(0.15, 0.4, 0.15, 1.0) * brightness_multiplier * 0.7  # Emission also extra dark
 		_:
-			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # White default
+			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0) * albedo_multiplier  # White default
 			material.emission = Color(0.3, 0.3, 0.3, 1.0) * brightness_multiplier
 	
 	material.emission_enabled = true
@@ -230,10 +220,10 @@ static func get_terrain_texture_for_type(terrain_type: int) -> String:
 	return terrain_textures.get(terrain_type, "res://assets/models/grass.jpg")
 
 static func load_mesh_only(model_path: String, texture_path: String = "") -> Node3D:
-	"""Load a model and return the complete scene (for skybox, terrain, etc.)
+	"""Load a GLB model and return the complete scene (for skybox, terrain, etc.)
 	This preserves all meshes in GLB files instead of just the first one."""
 	
-	# Try .glb first
+	# Ensure .glb extension
 	var glb_path = model_path
 	if not glb_path.ends_with(".glb"):
 		glb_path = model_path.get_basename() + ".glb"
@@ -247,27 +237,5 @@ static func load_mesh_only(model_path: String, texture_path: String = "") -> Nod
 			# This fixes the issue where floating mountains were being lost
 			# because only the first mesh was being extracted
 			return scene_instance
-	
-	# Fallback to .obj file
-	var obj_path = model_path.get_basename() + ".obj"
-	if ResourceLoader.exists(obj_path):
-		var mesh_instance = MeshInstance3D.new()
-		var mesh = load(obj_path)
-		if mesh and mesh is Mesh:
-			mesh_instance.mesh = mesh
-			
-			# Apply material with texture if provided
-			if texture_path != "":
-				var material = create_material_with_texture(texture_path)
-				mesh_instance.material_override = material
-			else:
-				# Apply default material for .obj files that don't have embedded materials
-				var default_material = StandardMaterial3D.new()
-				default_material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)
-				default_material.roughness = 0.6
-				default_material.metallic = 0.0
-				mesh_instance.material_override = default_material
-			
-			return mesh_instance
 	
 	return null
