@@ -86,8 +86,7 @@ var current_input_method: InputMethod = InputMethod.KEYBOARD
 var input_method_lock_timer: float = 0.0
 var INPUT_METHOD_LOCK_DURATION: float = 0.2  # Shorter lock for more responsive switching
 var using_pointer_input: bool = false  # Legacy compatibility flag
-var last_touch_time: float = 0.0  # Debouncing for touch input
-const TOUCH_DEBOUNCE_TIME: float = 0.2  # 200ms debounce
+# Touch debouncing variables removed since touch no longer triggers ring hits
 var touch_start_position: Vector2 = Vector2.ZERO  # Track where touch started
 var is_dragging: bool = false  # Track if currently dragging
 const DRAG_THRESHOLD: float = 20.0  # Minimum distance to consider it a drag (pixels)
@@ -1049,11 +1048,60 @@ func check_next_ring(music_time: float):
 	
 	var ring = ring_list[0]
 	
+	# Apply timing offset for hit detection synchronization
+	var adjusted_music_time = music_time + timing_offset
+	var time_diff = abs(ring["time"] - adjusted_music_time)
+	
+	# Check if ring should be automatically hit when player passes through it
+	# ONLY when using touch controls AND when the ring timing is close to current time
+	if not ring["cleared"] and current_input_method == InputMethod.TOUCH:
+		# Only check rings that are close in time (within reasonable window)
+		if abs(ring["time"] - adjusted_music_time) <= 0.3:  # Only check rings within 0.3 seconds of current time
+			# Check position accuracy - use world coordinates for both
+			var bunny_pos = Vector2(bunny_actor.position.x, bunny_actor.position.z)
+			var ring_world_pos = ring.get("world_position", Vector2.ZERO)
+			var distance = bunny_pos.distance_to(ring_world_pos)
+			
+			# Check if bunny is within ring collision area AND has crossed through the ring's Y position
+			if distance < 1.5:  # Within ring collision area
+				# Get ring's Y position and bunny's Y position
+				var ring_y_pos = ring["node"].position.y
+				var bunny_y_pos = bunny_actor.position.y
+				
+				# Only hit the ring if bunny has crossed through it (bunny Y >= ring Y)
+				# This ensures the ring disappears only when bunny actually passes through, not just enters collision area
+				if bunny_y_pos >= ring_y_pos:
+					# Always PERFECT when passing through with touch controls
+					var judgement = "PERFECT"
+					var base_score = 200
+					chain += 1
+					
+					# Check for proximity bonus using inner ring logic
+					var proximity_bonus = check_proximity_bonus(ring, Vector2.ZERO)
+					var final_score = base_score
+					if proximity_bonus:
+						final_score = int(base_score * 1.5)  # 50% bonus for inner ring hit
+					
+					score += final_score
+					judgement_stats[judgement] += 1
+					ring["cleared"] = true
+					
+					# Button hit feedback like original
+					if button_viewer:
+						button_viewer.button_hit()
+					
+					# Emit ring hit signal with proximity bonus as type-specific indicator
+					ring_hit.emit(judgement, chain, ring["button"], proximity_bonus)
+					
+					# Remove ring and debug circle
+					ring["node"].queue_free()
+					if ring.has("debug_circle") and ring["debug_circle"]:
+						ring["debug_circle"].queue_free()
+					ring_list.pop_front()
+					return
+	
 	# Check if ring is missed - EXACT original logic (with timing offset)
 	# Original: if ring["time"] - pos < -0.11: (where pos = self.music.getTime())
-	var adjusted_music_time = music_time + timing_offset
-	
-	
 	if ring["time"] - adjusted_music_time < -0.11:
 		if not ring["cleared"]:
 			# Miss!
@@ -1158,24 +1206,14 @@ func _input(event):
 	# Handle touch screen input
 	elif event is InputEventScreenTouch:
 		if event.pressed:
-			# Touch start - record position and time for drag detection
-			var current_time = Time.get_time_dict_from_system()
-			var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
-			
+			# Touch start - record position for movement
 			set_input_method(InputMethod.TOUCH)
 			touch_start_position = event.position
 			is_dragging = false
-			last_touch_time = current_timestamp
+			# Handle initial touch position for movement
+			handle_touch_at_position(event.position)
 		else:
-			# Touch release - check if it was a tap (not drag) for ring hitting
-			if not is_dragging:
-				# This was a tap, not a drag - hit rings
-				var current_time = Time.get_time_dict_from_system()
-				var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
-				
-				# Debounce to prevent double-touches
-				if current_timestamp - last_touch_time > TOUCH_DEBOUNCE_TIME:
-					check_centralized_button_press(InputMethod.TOUCH, touch_start_position)
+			# Touch release - no longer needed for ring hitting since rings auto-hit
 			is_dragging = false
 	
 	elif event is InputEventScreenDrag:
@@ -1256,7 +1294,7 @@ func handle_touch_at_position(touch_pos: Vector2):
 		mouse_old_y = touch_pos.y
 
 func check_button_press(button: String):
-	"""Check if button press hits a ring like original"""
+	"""Check if button press hits a ring - manual override since rings now auto-hit"""
 	var music_time = audio_player.get_playback_position()
 	if ring_list.is_empty():
 		return
@@ -1319,7 +1357,7 @@ func check_button_press(button: String):
 			ring_list.pop_front()
 
 func check_centralized_button_press(input_method: InputMethod, screen_position: Vector2 = Vector2.ZERO):
-	"""Check if centralized button press hits a ring - ignores button type (for mouse/touch)"""
+	"""Check if centralized button press hits a ring - manual override since rings now auto-hit"""
 	var music_time = audio_player.get_playback_position()
 	if ring_list.is_empty():
 		return

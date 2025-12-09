@@ -1,5 +1,5 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1765298748
+::res://::1765319158
 export_presets.cfg::TextFile::-1::1765248648::0::1::::<><><>0<>0<><>::
 icon.png::CompressedTexture2D::1277011667656170246::1765244419::1765244720::1::::<><><>0<>0<>54abbd9df75d357b6597b2a37ecd9a47<>res://.godot/imported/icon.png-487276ed1e3a0c39cad0279d744ee560.ctex::
 README.md::TextFile::-1::1765245430::0::1::::<><><>0<>0<><>::
@@ -155,7 +155,7 @@ BunnyAnimationController.gd::GDScript::4427465334110531366::1765235051::0::1::::
 EarAnimationController.gd::GDScript::6901073026191908541::1765235051::0::1::::EarAnimationController<>Node3D<><>0<>0<><>::
 GameplayUI.gd::GDScript::1111238893543190150::1765235051::0::1::::<>Control<><>0<>0<><>::
 HighScoreManager.gd::GDScript::4121346196102731051::1765242512::0::1::::<>Node<><>0<>0<><>::
-Level.gd::GDScript::6440193184237949790::1765316582::0::1::::Level<>Node3D<><>0<>0<><>::
+Level.gd::GDScript::6440193184237949790::1765319391::0::1::::Level<>Node3D<><>0<>0<><>::
 LevelGUI.gd::GDScript::7795272370005406640::1765235051::0::1::::LevelGUI<>Node<><>0<>0<><>::
 LevelResourceManager.gd::GDScript::4380170203165685084::1765247768::0::1::::<>Node<><>0<>0<><>::
 LevelSelect.gd::GDScript::4387071664237299517::1765247846::0::1::::<>Control<><>0<>0<><>::
