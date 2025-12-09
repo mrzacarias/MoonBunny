@@ -727,7 +727,7 @@ func _start_music():
 			var music_time = audio_player.get_playback_position()
 			if music_time == 0.0:
 				# HTML delay pattern detected
-				timing_offset = 0.50
+				timing_offset = 1.1
 			else:
 				# Normal timing
 				timing_offset = 0.0
