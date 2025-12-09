@@ -86,6 +86,11 @@ var current_input_method: InputMethod = InputMethod.KEYBOARD
 var input_method_lock_timer: float = 0.0
 var INPUT_METHOD_LOCK_DURATION: float = 0.2  # Shorter lock for more responsive switching
 var using_pointer_input: bool = false  # Legacy compatibility flag
+var last_touch_time: float = 0.0  # Debouncing for touch input
+const TOUCH_DEBOUNCE_TIME: float = 0.2  # 200ms debounce
+var touch_start_position: Vector2 = Vector2.ZERO  # Track where touch started
+var is_dragging: bool = false  # Track if currently dragging
+const DRAG_THRESHOLD: float = 20.0  # Minimum distance to consider it a drag (pixels)
 
 # Animation variables for smooth LERP
 var base_rotation: Vector3 = Vector3(0, 180, 0)  # Base flying pose
@@ -1113,15 +1118,36 @@ func _input(event):
 	# Handle touch screen input
 	elif event is InputEventScreenTouch:
 		if event.pressed:
+			# Touch start - record position and time for drag detection
+			var current_time = Time.get_time_dict_from_system()
+			var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
+			
 			set_input_method(InputMethod.TOUCH)
-			# Convert touch position to target bunny position with smooth LERP
-			handle_touch_at_position(event.position)
-			# Touch tap hits rings (works for all ring types)
-			check_centralized_button_press()
+			touch_start_position = event.position
+			is_dragging = false
+			last_touch_time = current_timestamp
+		else:
+			# Touch release - check if it was a tap (not drag) for ring hitting
+			if not is_dragging:
+				# This was a tap, not a drag - hit rings
+				var current_time = Time.get_time_dict_from_system()
+				var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
+				
+				# Debounce to prevent double-touches
+				if current_timestamp - last_touch_time > TOUCH_DEBOUNCE_TIME:
+					check_centralized_button_press()
+			is_dragging = false
 	
 	elif event is InputEventScreenDrag:
-		# Handle touch drag for smooth movement (no hit on drag)
+		# Touch drag - handle movement only
 		set_input_method(InputMethod.TOUCH)
+		
+		# Check if we've moved enough to consider this a drag
+		var drag_distance = event.position.distance_to(touch_start_position)
+		if drag_distance > DRAG_THRESHOLD:
+			is_dragging = true
+		
+		# Always handle movement during drag
 		handle_touch_at_position(event.position)
 	
 	# Handle mouse movement (when mouse moves)

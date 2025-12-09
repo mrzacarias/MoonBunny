@@ -26,6 +26,10 @@ var effective_viewport_size: Vector2  # Store the corrected viewport size for ce
 # Font resource
 var moonbunny_font: FontFile
 
+# Touch debouncing
+var last_touch_time: float = 0.0
+const TOUCH_DEBOUNCE_TIME: float = 0.3  # 300ms debounce
+
 func _ready():
 	# Load font
 	moonbunny_font = load("res://assets/fonts/HUM521BC.TTF")
@@ -110,9 +114,15 @@ func _input(event):
 		handle_mouse_click(event.position)
 		get_viewport().set_input_as_handled()
 	
-	# Handle touch input
+	# Handle touch input with debouncing
 	elif event is InputEventScreenTouch and event.pressed:
-		handle_mouse_click(event.position)  # Same logic as mouse
+		var current_time = Time.get_time_dict_from_system()
+		var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
+		
+		# Debounce touch input to prevent double-touches
+		if current_timestamp - last_touch_time > TOUCH_DEBOUNCE_TIME:
+			last_touch_time = current_timestamp
+			handle_mouse_click(event.position)  # Same logic as mouse
 		get_viewport().set_input_as_handled()
 	
 	# Handle mouse hover for level selection
