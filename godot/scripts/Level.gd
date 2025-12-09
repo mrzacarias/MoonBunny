@@ -598,24 +598,53 @@ func setup_rings():
 		base_x = clamp(base_x, -safe_area_x, safe_area_x)
 		base_z = clamp(base_z, -safe_area_z, safe_area_z)
 		
-		ring_instance.position = Vector3(
+		# Calculate the exact ring position once and reuse it
+		var ring_position = Vector3(
 			base_x,  # X = left/right
 			ring_y,  # Y = forward
 			(FLY_AREA_T + FLY_AREA_B) / 2.0 + base_z   # Z = up/down - centered in fly area (match moonbunny_godot)
 		)
-		
+		ring_instance.position = ring_position
 		
 		# Add ring material using ModelLoader
 		var ring_material = ModelLoader.create_ring_material(button)
 		ring_instance.material_override = ring_material
 		
-		rings_container.add_child(ring_instance)
+		# Create debug inner circle for proximity bonus visualization (75% of ring radius)
+		var inner_circle = MeshInstance3D.new()
+		var inner_torus = TorusMesh.new()
 		
-		# Store ring data - EXACT original format
+		# Calculate the proximity radius more accurately based on screen-space projection
+		# We'll use 75% of the main ring's outer radius as a base, but this will be
+		# more accurate when viewed from different camera angles
+		var proximity_radius = 1.5 * 0.4  # 40% of main ring collision radius = 0.6
+		inner_torus.inner_radius = proximity_radius - 0.08  # Slightly thicker for better visibility
+		inner_torus.outer_radius = proximity_radius
+		inner_circle.mesh = inner_torus
+		
+		# Create a semi-transparent material for the debug circle matching main ring color
+		var debug_material = StandardMaterial3D.new()
+		# Get the same color as the main ring but with 40% transparency
+		var main_ring_color = ring_material.albedo_color
+		debug_material.albedo_color = Color(main_ring_color.r, main_ring_color.g, main_ring_color.b, 0.4)
+		debug_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		debug_material.flags_unshaded = true
+		debug_material.no_depth_test = false  # Enable depth testing for proper occlusion
+		
+		inner_circle.material_override = debug_material
+		
+		# Position the inner circle at the EXACT same location as the ring
+		inner_circle.position = ring_position
+		
+		rings_container.add_child(ring_instance)
+		rings_container.add_child(inner_circle)
+		
+		# Store ring data - EXACT original format plus debug circle reference
 		# Original: self.ring_list.append({"node":ring, "time":beat*self.BEAT_DELAY, "button":button, "cleared": False})
 		# But "beat" was actually time, so time*BEAT_DELAY = time*(60/BPM) = time*beat_delay
 		ring_list.append({
 			"node": ring_instance,
+			"debug_circle": inner_circle,  # Reference to debug inner circle
 			"time": ring_time,  # Use ring_time directly (already in seconds, like moonbunny_godot)
 			"button": button,
 			"cleared": false,
@@ -692,6 +721,7 @@ func setup_input():
 	"""Setup input handling like original"""
 	# Input will be handled in _process and _input functions
 	pass
+
 
 func load_level_header():
 	"""Load level header file to get BPM and other metadata from resource manager"""
@@ -1034,8 +1064,10 @@ func check_next_ring(music_time: float):
 			
 			ring["cleared"] = true
 			
-			# Remove ring
+			# Remove ring and debug circle
 			ring["node"].queue_free()
+			if ring.has("debug_circle") and ring["debug_circle"]:
+				ring["debug_circle"].queue_free()
 			ring_list.pop_front()
 
 func update_terrain_patches(_music_time: float):
@@ -1113,7 +1145,7 @@ func _input(event):
 			KEY_SPACE:
 				if pressed: 
 					set_input_method(InputMethod.KEYBOARD)
-					check_centralized_button_press()
+					check_centralized_button_press(InputMethod.KEYBOARD, Vector2.ZERO)
 			
 			# Test mode key for ear animations
 			KEY_T:
@@ -1139,7 +1171,7 @@ func _input(event):
 				
 				# Debounce to prevent double-touches
 				if current_timestamp - last_touch_time > TOUCH_DEBOUNCE_TIME:
-					check_centralized_button_press()
+					check_centralized_button_press(InputMethod.TOUCH, touch_start_position)
 			is_dragging = false
 	
 	elif event is InputEventScreenDrag:
@@ -1151,8 +1183,9 @@ func _input(event):
 		if drag_distance > DRAG_THRESHOLD:
 			is_dragging = true
 		
-		# Always handle movement during drag
-		handle_touch_at_position(event.position)
+		# Only handle movement if we're actually dragging (not just small movements)
+		if is_dragging:
+			handle_touch_at_position(event.position)
 	
 	# Handle mouse movement (when mouse moves)
 	elif event is InputEventMouseMotion:
@@ -1165,7 +1198,7 @@ func _input(event):
 			match event.button_index:
 				MOUSE_BUTTON_LEFT:
 					set_input_method(InputMethod.MOUSE)
-					check_centralized_button_press()  # Mouse click works for all ring types
+					check_centralized_button_press(InputMethod.MOUSE, event.position)  # Mouse click works for all ring types
 	
 	# Handle gamepad button presses for ring hitting
 	elif event is InputEventJoypadButton:
@@ -1275,11 +1308,13 @@ func check_button_press(button: String):
 			
 			ring_hit.emit(judgement, chain, ring["button"], true)  # Type-specific hit
 			
-			# Remove ring
+			# Remove ring and debug circle
 			ring["node"].queue_free()
+			if ring.has("debug_circle") and ring["debug_circle"]:
+				ring["debug_circle"].queue_free()
 			ring_list.pop_front()
 
-func check_centralized_button_press():
+func check_centralized_button_press(input_method: InputMethod, screen_position: Vector2 = Vector2.ZERO):
 	"""Check if centralized button press hits a ring - ignores button type (for mouse/touch)"""
 	var music_time = audio_player.get_playback_position()
 	if ring_list.is_empty():
@@ -1294,33 +1329,50 @@ func check_centralized_button_press():
 	if not ring["cleared"]:
 		var judgement = ""
 		
-		# Timing windows matching original game exactly
+		# Timing windows matching original game exactly with 50% bonus only for touch hits
+		var base_score = 0
 		if time_diff <= 0.08:
 			judgement = "PERFECT"
-			score += 200  # Original score values
+			base_score = 200  # Original score values
 			chain += 1
 		elif time_diff <= 0.2:
 			judgement = "GOOD"
-			score += 100
+			base_score = 100
 			chain += 1
 		elif time_diff <= 0.3:
 			judgement = "OK"
-			score += 50
+			base_score = 50
 			chain += 1
 		elif time_diff <= 0.5:
 			judgement = "BAD"
-			score += 5
+			base_score = 5
 			chain = 0
 		else:
 			return  # Too far off
 		
-		# Check position accuracy - use world coordinates for both
+		# Apply 50% bonus only for touch hits (touch devices don't have multiple buttons)
+		var final_score = base_score
+		if input_method == InputMethod.TOUCH:
+			final_score = int(base_score * 1.5)  # 50% bonus for touch
+		
+		# Check for proximity bonus for touch/mouse hits (50% extra if close to ring center)
+		# Always check proximity to update ring color, but only apply bonus for touch/mouse
+		var proximity_bonus = check_proximity_bonus(ring, screen_position)
+		if (input_method == InputMethod.TOUCH or input_method == InputMethod.MOUSE) and proximity_bonus:
+			final_score = int(final_score * 1.5)  # Additional 50% bonus for close hits
+		
+		score += final_score
+		
+		# Check position accuracy - use world coordinates for bunny position OR 2D proximity bonus
 		var bunny_pos = Vector2(bunny_actor.position.x, bunny_actor.position.z)
 		var ring_world_pos = ring.get("world_position", Vector2.ZERO)
 		var distance = bunny_pos.distance_to(ring_world_pos)
 		
-		# Increase collision radius to be more forgiving - ring outer radius is 1.3
-		if distance < 1.5:  # Within ring collision area
+		# DEBUG: Print hit detection details
+		# Accept hit if: bunny is within 3D collision area OR proximity bonus was achieved (3D inner ring hit)
+		var hit_accepted = (distance < 1.5) or proximity_bonus  # Within ring collision area OR close 3D hit
+		
+		if hit_accepted:
 			judgement_stats[judgement] += 1
 			ring["cleared"] = true
 			
@@ -1328,11 +1380,80 @@ func check_centralized_button_press():
 			if button_viewer:
 				button_viewer.button_hit()
 			
-			ring_hit.emit(judgement, chain, ring["button"], false)  # Centralized hit (not type-specific)
+			# Determine if this should be treated as type-specific (touch OR proximity bonus)
+			var is_type_specific = (input_method == InputMethod.TOUCH) or proximity_bonus
+			ring_hit.emit(judgement, chain, ring["button"], is_type_specific)
 			
-			# Remove ring
+			# Remove ring and debug circle
 			ring["node"].queue_free()
+			if ring.has("debug_circle") and ring["debug_circle"]:
+				ring["debug_circle"].queue_free()
 			ring_list.pop_front()
+		else:
+			print("❌ HIT REJECTED - Neither 3D collision nor 2D proximity achieved")
+
+func check_proximity_bonus(ring: Dictionary, click_screen_position: Vector2 = Vector2.ZERO) -> bool:
+	"""Check if bunny position is within inner ring using EXACT same logic as main ring"""
+	print("🎯 INNER RING BONUS CHECK:")
+	if click_screen_position != Vector2.ZERO:
+		print("  Click screen position: ", click_screen_position)
+	
+	if not bunny_actor:
+		print("  ❌ No bunny found")
+		return false
+	
+	# Use EXACT same logic as main ring detection, but with smaller radius
+	# Check position accuracy - use world coordinates for both (COPIED FROM MAIN RING LOGIC)
+	var bunny_pos = Vector2(bunny_actor.position.x, bunny_actor.position.z)
+	var ring_world_pos = ring.get("world_position", Vector2.ZERO)
+	var distance = bunny_pos.distance_to(ring_world_pos)
+	
+	# Inner ring radius - 40% of main ring for challenging gameplay
+	# Main ring uses: distance < 1.5 (ring outer radius is 1.3, collision is 1.5)
+	var inner_ring_radius = 1.5 * 0.4  # 40% of main ring collision radius = 0.6
+	
+	# Use EXACT same collision check as main ring
+	var is_within_inner_ring = distance < inner_ring_radius
+	
+	# Update the inner ring color based on proximity
+	update_inner_ring_color(ring, is_within_inner_ring)
+	
+	
+	return is_within_inner_ring
+
+func update_inner_ring_color(ring: Dictionary, is_within_proximity: bool):
+	"""Update the inner ring color to match main ring color with 40% transparency"""
+	var debug_circle = ring.get("debug_circle")
+	if not debug_circle:
+		return
+	
+	# Get the button type to match the main ring color
+	var button_type = ring.get("button", "")
+	
+	# Get the same color as the main ring from ModelLoader
+	var main_ring_material = ModelLoader.create_ring_material(button_type)
+	var main_ring_color = main_ring_material.albedo_color
+	
+	# Create new material with same color but 40% transparency (0.4 alpha)
+	var material = StandardMaterial3D.new()
+	material.albedo_color = Color(main_ring_color.r, main_ring_color.g, main_ring_color.b, 0.4)
+	
+	# Set up proper transparency and depth testing like main rings
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
+	material.flags_unshaded = true
+	
+	# Enable proper depth testing so it occludes correctly with bunny and other objects
+	material.no_depth_test = false
+	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
+	material.depth_test_enabled = true
+	
+	# Remove depth offset - let natural z-depth handle occlusion like main rings
+	material.depth_offset_enabled = false
+	material.depth_offset_bias = 0.0
+	
+	debug_circle.material_override = material
+
 
 func get_ring_color(button_type: String) -> Color:
 	"""Get the color for a ring type"""
@@ -1397,10 +1518,12 @@ func end_level():
 	if remaining_rings > 0:
 		judgement_stats["MISS"] += remaining_rings
 		
-		# Clean up remaining ring nodes
+		# Clean up remaining ring nodes and debug circles
 		for ring in ring_list:
 			if ring["node"] and is_instance_valid(ring["node"]):
 				ring["node"].queue_free()
+			if ring.has("debug_circle") and ring["debug_circle"] and is_instance_valid(ring["debug_circle"]):
+				ring["debug_circle"].queue_free()
 		ring_list.clear()
 	
 	# Clean up GUI elements
