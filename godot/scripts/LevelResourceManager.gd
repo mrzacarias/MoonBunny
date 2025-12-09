@@ -39,9 +39,9 @@ func discover_available_levels():
 			if levels_dir.current_is_dir() and not dir_name.begins_with("."):
 				# Exclude training level (handled separately by main menu)
 				if dir_name != "training":
-					# Verify it has the required files (header.lvl and music file)
+					# Verify it has the required files (header.txt and music file)
 					var level_path = "res://assets/levels/" + dir_name + "/"
-					if FileAccess.file_exists(level_path + "header.lvl"):
+					if FileAccess.file_exists(level_path + "header.txt"):
 						# Check for music file (could be .mp3 or other formats)
 						var has_music = false
 						var music_extensions = [".mp3", ".ogg", ".wav"]
@@ -55,7 +55,7 @@ func discover_available_levels():
 						else:
 							print("ERROR: Level ", dir_name, " missing music file")
 					else:
-						print("ERROR: Level ", dir_name, " missing header.lvl file")
+						print("ERROR: Level ", dir_name, " missing header.txt file")
 			
 			dir_name = levels_dir.get_next()
 		
@@ -104,8 +104,8 @@ func preload_level_resources(level_name: String):
 	
 	# For HTML exports, FileAccess doesn't work reliably
 	# Use fallback data for now, but try FileAccess first for desktop/editor
-	var header_path = "res://assets/levels/" + level_name + "/header.lvl"
-	var ring_path = "res://assets/levels/" + level_name + "/Normal.rng"
+	var header_path = "res://assets/levels/" + level_name + "/header.txt"
+	var ring_path = "res://assets/levels/" + level_name + "/Normal.txt"
 	
 	# Try FileAccess first (works in editor/desktop)
 	var header_file = FileAccess.open(header_path, FileAccess.READ)

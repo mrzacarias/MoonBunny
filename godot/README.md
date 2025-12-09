@@ -47,8 +47,8 @@ MoonBunny is a 3D rhythm game where you control a bunny character flying through
 ## Level Format
 
 Levels are stored in `assets/levels/[level_name]/`:
-- `header.lvl`: Contains level metadata (title, artist, BPM, music file)
-- `Normal.rng`: Contains ring positions and timing data
+- `header.txt`: Contains level metadata (title, artist, BPM, music file)
+- `Normal.txt`: Contains ring positions and timing data
 
 ## Development
 

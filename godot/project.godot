@@ -14,7 +14,7 @@ config/name="MoonBunny"
 config/description="A 3D rhythm game where a bunny flies through musical rings"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
-config/icon="res://assets/textures/title.png"
+config/icon="res://icon.png"
 
 [autoload]
 
