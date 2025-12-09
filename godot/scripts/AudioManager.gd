@@ -43,8 +43,3 @@ static func get_volume_db(audio_type: String = "default") -> float:
 # Debug function to print current volume settings
 static func print_volume_settings():
 	"""Print current volume settings for debugging"""
-	print("AudioManager Volume Settings:")
-	print("  Master: ", MASTER_VOLUME_DB, " dB")
-	print("  Music: ", MUSIC_VOLUME_DB, " dB")
-	print("  SFX: ", SFX_VOLUME_DB, " dB")
-	print("  Menu: ", MENU_SOUND_VOLUME_DB, " dB")

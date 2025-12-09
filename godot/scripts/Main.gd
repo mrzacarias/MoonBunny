@@ -45,7 +45,6 @@ var judgement_stats: Dictionary = {}
 var is_training: bool = false
 
 func _ready():
-	print("Main scene ready")
 	
 	# Manual node resolution for HTML export compatibility
 	if not splash_screen:
@@ -71,9 +70,6 @@ func _ready():
 	if menu_music:
 		AudioManager.apply_standard_volume(menu_music, "menu")
 	
-	print("Main: Node resolution complete")
-	print("  splash_screen: ", splash_screen)
-	print("  main_menu: ", main_menu)
 	
 	# Connect UI signals with null checks
 	if main_menu and main_menu.has_signal("start_pressed"):
@@ -94,9 +90,7 @@ func _ready():
 	
 	# For HTML exports, just use a simple timer-based splash screen
 	# The SplashScreen script often doesn't work properly in HTML exports
-	print("Main: Setting up simple timer-based splash screen for HTML export")
 	get_tree().create_timer(3.0).timeout.connect(func():
-		print("Main: Timer-based splash finished - transitioning to title")
 		_on_splash_finished()
 	)
 	
@@ -122,8 +116,6 @@ func _input(event):
 
 func change_state(new_state: GameState):
 	"""Change game state and update UI"""
-	print("🏠 Main: State changed to ", GameState.keys()[new_state])
-	print("🏠 Main: is_training=", is_training)
 	
 	# Store previous state
 	previous_state = current_state
@@ -178,30 +170,26 @@ func hide_all_ui():
 
 func show_splash_screen():
 	"""Show splash screen with simple approach for HTML exports"""
-	print("🏠 Main: show_splash_screen called")
 	if splash_screen:
-		print("🏠 Main: splash_screen found, making visible")
 		splash_screen.visible = true
 		
 		# Try to play the splash sound manually
 		var splash_sound = splash_screen.get_node_or_null("SplashSound")
 		if splash_sound and splash_sound.stream:
-			print("🏠 Main: Playing splash sound")
 			splash_sound.play()
 		
 		# Simple logo fade animation
 		var logo = splash_screen.get_node_or_null("CenterContainer/VBoxContainer/Logo")
 		if logo:
-			print("🏠 Main: Animating logo")
 			logo.modulate.a = 0.0
 			var tween = create_tween()
 			tween.tween_property(logo, "modulate:a", 1.0, 0.5)
 			tween.tween_interval(2.0)  # Show for 2 seconds
 			tween.tween_property(logo, "modulate:a", 0.0, 0.5)
 		else:
-			print("🏠 Main: No logo found")
+			print("ERROR: Failed to load background image")
 	else:
-		print("🏠 Main: ERROR - splash_screen is null!")
+		print("ERROR: Background image not found")
 	
 	if background_color:
 		background_color.visible = false  # Hide background during splash
@@ -217,14 +205,12 @@ func show_title_screen():
 	
 	# Add delay to prevent immediate input processing when coming from results
 	if previous_state == GameState.RESULT:
-		print("🏠 Main: Coming from results, adding input delay")
 		# Temporarily disable main menu input using flag
 		if main_menu:
 			main_menu.input_enabled = false
 		get_tree().create_timer(0.5).timeout.connect(func(): 
 			if main_menu and is_instance_valid(main_menu):
 				main_menu.input_enabled = true
-				print("🏠 Main: MainMenu input re-enabled")
 		)
 	else:
 		# Normal case - enable input immediately
@@ -259,16 +245,21 @@ func show_result():
 		current_level.queue_free()
 		current_level = null
 	
-	print("🏠 Main: Showing ResultScreen scene")
 	
 	# Use local result data
 	if result_screen:
 		if judgement_stats.has("stats"):
 			# New format with complete data structure
-			result_screen.show_results(judgement_stats["stats"], judgement_stats.get("score", 0), judgement_stats.get("n_rings", 0))
+			result_screen.show_results(
+				judgement_stats["stats"], 
+				judgement_stats.get("score", 0), 
+				judgement_stats.get("n_rings", 0),
+				selected_level,
+				judgement_stats.get("rank", "")
+			)
 		else:
 			# Fallback if data format is different (old format)
-			result_screen.show_results(judgement_stats, level_score, 0)
+			result_screen.show_results(judgement_stats, level_score, 0, selected_level)
 		
 		result_screen.visible = true
 	if background_color:
@@ -336,7 +327,7 @@ func _on_training_finished():
 	# Training goes to results just like regular levels
 	pass
 
-func _on_ring_hit(judgement: String, chain: int):
+func _on_ring_hit(judgement: String, chain: int, ring_type: String, is_type_specific: bool):
 	"""Handle ring hit for UI updates"""
 	# Update gameplay UI
 	if current_level and gameplay_ui:
@@ -346,12 +337,11 @@ func _on_ring_hit(judgement: String, chain: int):
 			score_label.text = "Score: " + str(current_level.score)
 		if chain_label:
 			chain_label.text = "Chain: " + str(chain)
-		# Show judgement image
-		gameplay_ui.show_judgement(judgement)
+		# Show judgement image with ring explosion effect info
+		gameplay_ui.show_judgement(judgement, ring_type, is_type_specific)
 
 func _on_level_music_started():
 	"""Handle level music started - transition from black screen to gameplay UI"""
-	print("🏠 Main: Level music started, transitioning to gameplay UI")
 	if black_screen_overlay:
 		black_screen_overlay.visible = false
 	if gameplay_ui:
@@ -392,13 +382,11 @@ func on_back_to_menu():
 
 func _on_result_screen_return_to_menu():
 	"""Handle ResultScreen signal to return to main menu"""
-	print("🏠 Main: ResultScreen requested return to menu")
 	on_back_to_menu()
 
 
 func _on_splash_finished():
 	"""Handle splash screen completion"""
-	print("🏠 Main: Splash screen finished, transitioning to title")
 	change_state(GameState.TITLE)
 
 func show_empty_results():

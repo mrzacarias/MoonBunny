@@ -46,10 +46,18 @@ func _ready():
 		update_display()
 
 func _on_visibility_changed():
-	if visible and level_items.is_empty():
-		calculate_responsive_sizes()  # Recalculate on visibility change
-		setup_level_items()
-		update_display()
+	if visible:
+		# Always reload high scores when level select becomes visible
+		HighScoreManager.load_high_scores()
+		
+		if level_items.is_empty():
+			calculate_responsive_sizes()  # Recalculate on visibility change
+			setup_level_items()
+			update_display()
+		else:
+			# Refresh high scores and rebuild level items to show updated scores
+			setup_level_items()
+			update_display()
 
 func calculate_responsive_sizes():
 	"""Calculate responsive sizes based on viewport dimensions"""
@@ -58,11 +66,8 @@ func calculate_responsive_sizes():
 	
 	# HTML-specific viewport handling
 	if OS.get_name() == "Web":
-		print("HTML/Web platform detected")
-		print("Raw viewport size: ", viewport_size)
 		# Force HTML to use 960x720 as reference since that's the actual canvas size
 		viewport_size = Vector2(960, 720)
-		print("Using fixed HTML viewport size: ", viewport_size)
 	
 	# Store the effective viewport size for centering calculations
 	effective_viewport_size = viewport_size
@@ -72,20 +77,11 @@ func calculate_responsive_sizes():
 	# Ensure minimum scale for readability
 	scale_factor = max(scale_factor, 0.6)
 	
-	print("Viewport size: ", viewport_size)
-	print("Scale factor: ", scale_factor)
-	
 	# Calculate responsive values (15% smaller than before)
 	item_spacing = 600.0 * scale_factor * 0.85
 	image_size = Vector2(469, 469) * scale_factor * 0.85
 	font_size_title = int(54 * scale_factor * 0.85)
 	font_size_info = int(41 * scale_factor * 0.85)
-	
-	print("Responsive values:")
-	print("  Item spacing: ", item_spacing)
-	print("  Image size: ", image_size)
-	print("  Font size title: ", font_size_title)
-	print("  Font size info: ", font_size_info)
 
 func _input(event):
 	if not visible:
@@ -108,13 +104,26 @@ func _input(event):
 	elif event.is_action_pressed("ui_cancel"):
 		_on_back_pressed()
 		get_viewport().set_input_as_handled()
+	
+	# Handle mouse clicks
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		handle_mouse_click(event.position)
+		get_viewport().set_input_as_handled()
+	
+	# Handle touch input
+	elif event is InputEventScreenTouch and event.pressed:
+		handle_mouse_click(event.position)  # Same logic as mouse
+		get_viewport().set_input_as_handled()
+	
+	# Handle mouse hover for level selection
+	elif event is InputEventMouseMotion:
+		handle_mouse_hover(event.position)
 
 func load_available_levels():
 	available_levels.clear()
 	
 	# Use LevelResourceManager which handles HTML compatibility
 	available_levels = LevelResourceManager.get_available_levels()
-	print("Loaded levels from LevelResourceManager: ", available_levels)
 
 func setup_level_items():
 	"""Create level items with simple, clean logic"""
@@ -141,14 +150,11 @@ func setup_level_items():
 		# Create image using NinePatchRect
 		var level_image = NinePatchRect.new()
 		
-		print("Loading image for level: ", level_name, " using LevelResourceManager")
-		
 		# Use LevelResourceManager which handles HTML compatibility
 		var texture = LevelResourceManager.get_level_image(level_name)
 		
 		if texture and texture is Texture2D:
 			level_image.texture = texture
-			print("Image loaded successfully from LevelResourceManager: ", level_name)
 		else:
 			# Create a simple colored rectangle as fallback
 			var placeholder = ColorRect.new()
@@ -157,7 +163,6 @@ func setup_level_items():
 			placeholder.position = Vector2((item_spacing - image_size.x) / 2, 20)
 			level_item.add_child(placeholder)
 			level_image = null
-			print("Using placeholder for: ", level_name)
 		
 		if level_image:
 			level_image.size = image_size
@@ -182,12 +187,15 @@ func setup_level_items():
 		level_item.add_child(title_label)
 		text_y += title_height + 10  # Dynamic spacing
 		
+		# Declare info_height for reuse
+		var info_height: int
+		
 		# Artist
 		if level_data.has("ARTIST"):
 			var artist_label = Label.new()
 			artist_label.text = "by " + level_data["ARTIST"]
 			artist_label.position = Vector2(text_x, text_y)
-			var info_height = font_size_info + 8  # Dynamic height based on font size
+			info_height = font_size_info + 8  # Dynamic height based on font size
 			artist_label.size = Vector2(text_width, info_height)
 			artist_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			artist_label.add_theme_font_override("font", moonbunny_font)
@@ -200,13 +208,30 @@ func setup_level_items():
 		var bpm_label = Label.new()
 		bpm_label.text = "BPM " + str(level_data.get("BPM", 120))
 		bpm_label.position = Vector2(text_x, text_y)
-		var info_height = font_size_info + 8  # Dynamic height based on font size
+		info_height = font_size_info + 8  # Reuse the already declared variable
 		bpm_label.size = Vector2(text_width, info_height)
 		bpm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		bpm_label.add_theme_font_override("font", moonbunny_font)
 		bpm_label.add_theme_font_size_override("font_size", font_size_info)
 		bpm_label.add_theme_color_override("font_color", Color.WHITE)
 		level_item.add_child(bpm_label)
+		text_y += info_height + 8  # Dynamic spacing
+		
+		# High Score (if exists)
+		if HighScoreManager.has_high_score(level_name):
+			var high_score_label = Label.new()
+			high_score_label.text = HighScoreManager.get_high_score_text(level_name)
+			high_score_label.position = Vector2(text_x, text_y)
+			var high_score_height = font_size_info + 8  # Dynamic height based on font size
+			high_score_label.size = Vector2(text_width, high_score_height)
+			high_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			high_score_label.add_theme_font_override("font", moonbunny_font)
+			high_score_label.add_theme_font_size_override("font_size", font_size_info)
+			# Yellow color with black outline
+			high_score_label.add_theme_color_override("font_color", Color.YELLOW)
+			high_score_label.add_theme_color_override("font_outline_color", Color.BLACK)
+			high_score_label.add_theme_constant_override("outline_size", 2)
+			level_item.add_child(high_score_label)
 		
 		level_container.add_child(level_item)
 		level_items.append(level_item)
@@ -231,15 +256,6 @@ func update_display():
 	if OS.get_name() == "Web":
 		var html_offset = image_size.x / 2
 		target_x += html_offset
-		print("HTML centering offset applied: +", html_offset, "px (half of image width)")
-	
-	print("Centering Debug - Raw screen size: ", get_viewport().size)
-	print("Centering Debug - Effective screen size: ", effective_viewport_size)
-	print("Screen center: ", screen_center)
-	print("Current index: ", current_level_index)
-	print("Item spacing: ", item_spacing)
-	print("Current item center: ", current_item_center)
-	print("Target X (final): ", target_x)
 	
 	level_container_tween.tween_property(level_container, "position:x", target_x, 0.2)
 
@@ -255,13 +271,53 @@ func play_menu_sound():
 
 func load_level_header(level_name: String) -> Dictionary:
 	"""Load level header data using LevelResourceManager for HTML compatibility"""
-	print("Loading header for: ", level_name, " using LevelResourceManager")
 	
 	# Use LevelResourceManager which handles HTML compatibility with fallbacks
 	var level_data = LevelResourceManager.parse_level_header(level_name)
 	
-	print("Final level data from LevelResourceManager: ", level_data)
 	return level_data
+
+func handle_mouse_click(click_position: Vector2):
+	"""Handle mouse/touch clicks on level selection"""
+	# Check if clicking on arrow buttons
+	if arrow_left and arrow_left.visible:
+		var left_rect = Rect2(arrow_left.global_position, arrow_left.size)
+		if left_rect.has_point(click_position) and current_level_index > 0:
+			current_level_index -= 1
+			play_menu_sound()
+			update_display()
+			return
+	
+	if arrow_right and arrow_right.visible:
+		var right_rect = Rect2(arrow_right.global_position, arrow_right.size)
+		if right_rect.has_point(click_position) and current_level_index < available_levels.size() - 1:
+			current_level_index += 1
+			play_menu_sound()
+			update_display()
+			return
+	
+	# Check if clicking on current level item (to select/play)
+	if level_items.size() > current_level_index:
+		var current_item = level_items[current_level_index]
+		var item_rect = Rect2(current_item.global_position, current_item.size)
+		if item_rect.has_point(click_position):
+			_on_play_pressed()
+			return
+
+func handle_mouse_hover(mouse_position: Vector2):
+	"""Handle mouse hover for level selection"""
+	# Check if hovering over arrow buttons for visual feedback
+	if arrow_left and arrow_left.visible:
+		var left_rect = Rect2(arrow_left.global_position, arrow_left.size)
+		if left_rect.has_point(mouse_position) and current_level_index > 0:
+			# Could add hover effect here
+			return
+	
+	if arrow_right and arrow_right.visible:
+		var right_rect = Rect2(arrow_right.global_position, arrow_right.size)
+		if right_rect.has_point(mouse_position) and current_level_index < available_levels.size() - 1:
+			# Could add hover effect here
+			return
 
 # Signals
 signal level_selected(level_name: String)

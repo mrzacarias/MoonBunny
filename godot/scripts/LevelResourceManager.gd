@@ -13,7 +13,6 @@ var level_rings: Dictionary = {}
 var available_levels: Array[String] = []
 
 func _ready():
-	print("LevelResourceManager: Initializing")
 	discover_available_levels()
 	preload_all_resources()
 
@@ -21,6 +20,15 @@ func discover_available_levels():
 	"""Automatically discover available levels from the levels directory, excluding training"""
 	available_levels.clear()
 	
+	# Check if we're running in HTML/Web export
+	if OS.get_name() == "Web":
+		# For HTML export, use hardcoded list since file system access is limited
+		# These are the levels that actually exist in the assets/levels directory
+		available_levels = ["7stars", "bang_bang", "green_hill_zone", "mirrors_edge", "rirura_2"]
+		available_levels.sort()
+		return
+	
+	# Try to read levels directory dynamically (desktop platforms)
 	var levels_dir = DirAccess.open("res://assets/levels/")
 	if levels_dir:
 		levels_dir.list_dir_begin()
@@ -44,17 +52,15 @@ func discover_available_levels():
 						
 						if has_music:
 							available_levels.append(dir_name)
-							print("LevelResourceManager: Discovered level: ", dir_name)
 						else:
-							print("LevelResourceManager: Skipping ", dir_name, " - no music file found")
+							print("ERROR: Level ", dir_name, " missing music file")
 					else:
-						print("LevelResourceManager: Skipping ", dir_name, " - no header.lvl found")
+						print("ERROR: Level ", dir_name, " missing header.lvl file")
 			
 			dir_name = levels_dir.get_next()
 		
 		levels_dir.list_dir_end()
 	else:
-		print("LevelResourceManager: Could not open levels directory, falling back to hardcoded list")
 		# Fallback to hardcoded list (excluding training)
 		available_levels = [
 			"7stars",
@@ -66,11 +72,9 @@ func discover_available_levels():
 	
 	# Sort levels alphabetically for consistent ordering
 	available_levels.sort()
-	print("LevelResourceManager: Available levels: ", available_levels)
 
 func preload_all_resources():
 	"""Preload all level resources for HTML export compatibility"""
-	print("LevelResourceManager: Preloading all level resources")
 	
 	# Always preload training level for main menu access
 	preload_level_resources("training")
@@ -81,25 +85,22 @@ func preload_all_resources():
 
 func preload_level_resources(level_name: String):
 	"""Preload all resources for a specific level"""
-	print("LevelResourceManager: Preloading resources for ", level_name)
 	
 	# Preload images
 	var image_path = "res://assets/levels/" + level_name + "/image.png"
 	var texture = load(image_path)
 	if texture:
 		level_images[level_name] = texture
-		print("LevelResourceManager: Loaded image for ", level_name)
 	else:
-		print("LevelResourceManager: Failed to load image for ", level_name)
+		print("ERROR: Failed to load level image: ", image_path)
 	
 	# Preload music
 	var music_path = "res://assets/levels/" + level_name + "/" + level_name + ".mp3"
 	var music = load(music_path)
 	if music:
 		level_music[level_name] = music
-		print("LevelResourceManager: Loaded music for ", level_name)
 	else:
-		print("LevelResourceManager: Failed to load music for ", level_name)
+		print("ERROR: Failed to load music file: ", music_path)
 	
 	# For HTML exports, FileAccess doesn't work reliably
 	# Use fallback data for now, but try FileAccess first for desktop/editor
@@ -112,9 +113,7 @@ func preload_level_resources(level_name: String):
 		var header_content = header_file.get_as_text()
 		level_headers[level_name] = header_content
 		header_file.close()
-		print("LevelResourceManager: Loaded header via FileAccess for ", level_name)
 	else:
-		print("LevelResourceManager: FileAccess failed for header, using fallback for ", level_name)
 		level_headers[level_name] = get_fallback_header(level_name)
 	
 	# Same for ring files
@@ -123,9 +122,7 @@ func preload_level_resources(level_name: String):
 		var ring_content = ring_file.get_as_text()
 		level_rings[level_name] = ring_content
 		ring_file.close()
-		print("LevelResourceManager: Loaded rings via FileAccess for ", level_name)
 	else:
-		print("LevelResourceManager: FileAccess failed for rings, using fallback for ", level_name)
 		level_rings[level_name] = get_fallback_rings(level_name)
 
 # Getter functions for other scripts to use
@@ -1297,7 +1294,6 @@ func get_fallback_rings(level_name: String) -> String:
 0, 0; 2.3307; D"""
 		_:
 			return "# Fallback - no specific ring data available\n0, 0; 4.0; A\n0.1, 0; 1.0; B\n-0.1, 0; 1.0; C\n0, 0.1; 1.0; D\n0, -0.1; 1.0; A"
-	return ""
 
 func parse_level_header(level_name: String) -> Dictionary:
 	"""Parse level header data from preloaded content"""

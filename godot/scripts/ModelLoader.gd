@@ -22,12 +22,11 @@ static func load_model_with_materials(model_path: String, texture_path: String =
 			var skeleton = find_skeleton(scene_instance)
 			
 			if animation_player:
-				print("✅ Found AnimationPlayer with ", animation_player.get_animation_list().size(), " animations")
+				pass # Animation player found and logged
 			
 			if skeleton:
-				print("✅ Found Skeleton3D with ", skeleton.get_bone_count(), " bones")
-			
-			print("Loaded GLB model: ", glb_path)
+				pass # Skeleton found and logged
+				
 			# Return the entire scene to preserve animations and skeleton
 			return scene_instance
 	
@@ -38,7 +37,6 @@ static func load_model_with_materials(model_path: String, texture_path: String =
 		var mesh = load(obj_path)
 		if mesh and mesh is Mesh:
 			mesh_instance.mesh = mesh
-			print("Loaded OBJ model: ", obj_path)
 			
 			# Apply material with texture if provided
 			if texture_path != "":
@@ -54,7 +52,6 @@ static func load_model_with_materials(model_path: String, texture_path: String =
 			
 			return mesh_instance
 	
-	print("Model file not found: ", model_path, " (tried .glb and .obj)")
 	return null
 
 static func find_animation_player(node: Node) -> AnimationPlayer:
@@ -102,12 +99,9 @@ static func create_material_with_texture(texture_path: String) -> StandardMateri
 		if texture:
 			material.albedo_texture = texture
 			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # Full white to show texture
-			print("Applied texture: ", texture_path)
 		else:
-			print("Failed to load texture: ", texture_path)
 			material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)  # Fallback gray
 	else:
-		print("Texture file not found: ", texture_path)
 		material.albedo_color = Color(0.8, 0.8, 0.8, 1.0)  # Fallback gray
 	
 	# Set good default material properties for Godot 4.x
@@ -117,7 +111,7 @@ static func create_material_with_texture(texture_path: String) -> StandardMateri
 	material.flags_transparent = false
 	material.flags_albedo_tex_force_srgb = true
 	# Additional settings to reduce reflections
-	material.specular = 0.0  # Minimize specular highlights
+	# Note: specular property removed in Godot 4.x - controlled by roughness and metallic
 	# Use normal albedo color without web-specific adjustments
 	# material.albedo_color = material.albedo_color * 1.1  # Removed web-specific brightness
 	
@@ -136,21 +130,20 @@ static func create_ring_material(button: String) -> StandardMaterial3D:
 	var brightness_multiplier = 1.0
 	if OS.get_name() == "Web":
 		brightness_multiplier = 0.6  # 40% darker for HTML (was 0.8, now 0.6 for additional 20% reduction)
-		print("🌐 HTML: Using darker ring materials (", brightness_multiplier, "x)")
 	
 	match button:
 		"A": 
-			material.albedo_color = Color(0.3, 0.5, 1.0, 1.0)  # Bright blue
-			material.emission = Color(0.15, 0.25, 0.6, 1.0) * brightness_multiplier
+			material.albedo_color = Color(0.4, 0.3, 0.8, 1.0)  # Purple/Blue (from cross texture)
+			material.emission = Color(0.2, 0.15, 0.4, 1.0) * brightness_multiplier
 		"B": 
-			material.albedo_color = Color(1.0, 0.2, 0.2, 1.0)  # Bright red
-			material.emission = Color(0.6, 0.1, 0.1, 1.0) * brightness_multiplier
+			material.albedo_color = Color(0.6, 0.2, 0.2, 1.0)  # Dark Red/Maroon (from circle texture - right position)
+			material.emission = Color(0.3, 0.1, 0.1, 1.0) * brightness_multiplier
 		"C": 
-			material.albedo_color = Color(1.0, 0.2, 1.0, 1.0)  # Bright magenta
-			material.emission = Color(0.6, 0.1, 0.6, 1.0) * brightness_multiplier
+			material.albedo_color = Color(0.8, 0.3, 0.8, 1.0)  # Purple/Magenta (from square texture - left position)
+			material.emission = Color(0.4, 0.15, 0.4, 1.0) * brightness_multiplier
 		"D": 
-			material.albedo_color = Color(1.0, 1.0, 0.2, 1.0)  # Bright yellow
-			material.emission = Color(0.6, 0.6, 0.1, 1.0) * brightness_multiplier
+			material.albedo_color = Color(0.3, 0.8, 0.3, 1.0)  # Green (from triangle texture)
+			material.emission = Color(0.15, 0.4, 0.15, 1.0) * brightness_multiplier
 		_:
 			material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # White default
 			material.emission = Color(0.3, 0.3, 0.3, 1.0) * brightness_multiplier
@@ -184,10 +177,8 @@ static func create_skybox_material() -> StandardMaterial3D:
 	
 	var texture_loaded = false
 	for sky_texture_path in sky_texture_paths:
-		print("🔍 Trying to load: ", sky_texture_path)
 		if ResourceLoader.exists(sky_texture_path):
 			var sky_texture = load(sky_texture_path)
-			print("🔍 Loaded resource type: ", type_string(typeof(sky_texture)))
 			if sky_texture and sky_texture is Texture2D:
 				material.albedo_texture = sky_texture
 				material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)  # Pure white base
@@ -206,17 +197,14 @@ static func create_skybox_material() -> StandardMaterial3D:
 				# Ensure proper shading for brightness
 				material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 				
-				print("✅ Successfully applied sky texture: ", sky_texture_path)
-				print("🔍 Texture size: ", sky_texture.get_size())
 				texture_loaded = true
 				break
 			else:
-				print("❌ Failed to load sky texture as Texture2D: ", sky_texture_path)
+				print("ERROR: Failed to load sky texture as Texture2D: ", sky_texture_path)
 		else:
-			print("❌ Sky texture file not found: ", sky_texture_path)
+			print("ERROR: Sky texture file not found: ", sky_texture_path)
 	
 	if not texture_loaded:
-		print("⚠️ Using fallback gradient skybox")
 		setup_gradient_sky_material(material)
 	
 	return material
@@ -225,7 +213,6 @@ static func setup_gradient_sky_material(material: StandardMaterial3D):
 	material.albedo_color = Color(0.5, 0.7, 1.0, 1.0)  # Sky blue
 	material.emission_enabled = true
 	material.emission = Color(0.3, 0.5, 0.8, 1.0)  # Bright sky blue emission
-	print("Using gradient skybox material")
 
 static func get_terrain_texture_for_type(terrain_type: int) -> String:
 	"""Get the appropriate texture path for terrain type based on original .egg analysis"""
@@ -268,7 +255,6 @@ static func load_mesh_only(model_path: String, texture_path: String = "") -> Nod
 		var mesh = load(obj_path)
 		if mesh and mesh is Mesh:
 			mesh_instance.mesh = mesh
-			print("Loaded OBJ mesh: ", obj_path)
 			
 			# Apply material with texture if provided
 			if texture_path != "":
@@ -284,5 +270,4 @@ static func load_mesh_only(model_path: String, texture_path: String = "") -> Nod
 			
 			return mesh_instance
 	
-	print("Model file not found: ", model_path, " (tried .glb and .obj)")
 	return null

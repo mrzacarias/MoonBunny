@@ -125,21 +125,31 @@ func _input(event):
 	# Input is now controlled by visibility and input_enabled flag
 		
 	if event.is_action_pressed("ui_up"):
-		print("🏠 MainMenu: UP pressed")
 		change_selection(-1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_down"):
-		print("🏠 MainMenu: DOWN pressed")
 		change_selection(1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_accept"):
-		print("🏠 MainMenu: ACCEPT pressed, selection=", current_selection)
 		select_current_option()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel"):
-		print("🏠 MainMenu: CANCEL pressed")
 		_on_exit_pressed()
 		get_viewport().set_input_as_handled()
+	
+	# Handle mouse clicks on menu items
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		handle_mouse_click(event.position)
+		get_viewport().set_input_as_handled()
+	
+	# Handle touch input on menu items
+	elif event is InputEventScreenTouch and event.pressed:
+		handle_mouse_click(event.position)  # Same logic as mouse
+		get_viewport().set_input_as_handled()
+	
+	# Handle mouse hover for menu selection
+	elif event is InputEventMouseMotion:
+		handle_mouse_hover(event.position)
 
 func change_selection(direction: int):
 	# Play menu sound
@@ -179,16 +189,12 @@ func update_selection():
 			label.modulate = Color(0.8, 0.8, 0.8, 1.0)
 
 func select_current_option():
-	print("🏠 MainMenu: Selecting option ", current_selection)
 	match current_selection:
 		0: 
-			print("🏠 MainMenu: Starting game (going to level select)")
 			_on_start_pressed()
 		1: 
-			print("🏠 MainMenu: Starting training")
 			_on_training_pressed()
 		2: 
-			print("🏠 MainMenu: Exiting game")
 			_on_exit_pressed()
 
 # Signals for communication with Main
@@ -207,5 +213,29 @@ func _on_training_pressed():
 func _on_exit_pressed():
 	get_viewport().set_input_as_handled()
 	exit_pressed.emit()
+
+func handle_mouse_click(click_position: Vector2):
+	"""Handle mouse/touch clicks on menu items"""
+	for i in range(menu_items.size()):
+		var label = menu_items[i]
+		var label_rect = Rect2(label.global_position, label.size)
+		
+		if label_rect.has_point(click_position):
+			current_selection = i
+			update_selection()
+			select_current_option()
+			return
+
+func handle_mouse_hover(mouse_position: Vector2):
+	"""Handle mouse hover to change selection"""
+	for i in range(menu_items.size()):
+		var label = menu_items[i]
+		var label_rect = Rect2(label.global_position, label.size)
+		
+		if label_rect.has_point(mouse_position):
+			if current_selection != i:
+				current_selection = i
+				update_selection()
+			return
 
 # State handling is now done by Main.gd

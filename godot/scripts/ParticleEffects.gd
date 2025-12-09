@@ -206,7 +206,6 @@ class ParticleManager extends Node3D:
 			add_child(miss_particles)
 			miss_particle_pool.append(miss_particles)
 			
-		print("🎆 ParticleManager: Created pools with ", pool_size, " hit and ", pool_size, " miss particle systems")
 		
 	func play_hit_effect(position: Vector3, judgement: String):
 		"""Play hit effect using pooled particles"""

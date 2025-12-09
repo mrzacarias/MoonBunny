@@ -18,10 +18,6 @@ var splash_completed = false
 var splash_tween: Tween
 
 func _ready():
-	print("SplashScreen: Ready")
-	print("SplashScreen: Node name: ", name)
-	print("SplashScreen: Node path: ", get_path())
-	print("SplashScreen: Is visible: ", visible)
 	
 	# Manual node resolution for HTML export compatibility
 	if not logo:
@@ -32,60 +28,49 @@ func _ready():
 		timer = get_node_or_null("Timer")
 	
 	# Debug resolved variables
-	print("SplashScreen: logo = ", logo)
-	print("SplashScreen: splash_sound = ", splash_sound)
-	print("SplashScreen: timer = ", timer)
 	
 	# Set splash sound volume using centralized config
 	if splash_sound:
-		print("SplashScreen: Setting up splash sound")
 		AudioManager.apply_standard_volume(splash_sound, "sfx")
 	else:
-		print("SplashScreen: WARNING - splash_sound is null")
+		pass # Failed to apply standard volume
 	
 	# Connect timer signal
 	if timer:
-		print("SplashScreen: Setting up timer")
 		timer.timeout.connect(_on_timer_timeout)
 		# Start timer as fallback
 		timer.start()
 	else:
-		print("SplashScreen: WARNING - timer is null")
+		pass # Timer not available
 	
 	# Debug logo properties
 	if logo:
-		print("SplashScreen: Logo texture: ", logo.texture)
-		print("SplashScreen: Logo size: ", logo.size)
-		print("SplashScreen: Logo custom_minimum_size: ", logo.custom_minimum_size)
 		
 		# Start with logo invisible
 		logo.modulate.a = 0.0
 	else:
-		print("SplashScreen: WARNING - logo is null")
+		pass # Logo not available
 	
 	# Start the splash sequence
 	start_splash()
 
 func start_splash():
 	"""Start the splash screen sequence"""
-	print("SplashScreen: Starting splash sequence")
 	
 	# Try to play splash sound (may fail in HTML due to autoplay policy)
 	if splash_sound and splash_sound.stream:
-		print("SplashScreen: Attempting to play splash sound")
 		splash_sound.play()
 		# Check if it actually started playing
 		await get_tree().process_frame
 		if splash_sound.playing:
-			print("SplashScreen: Splash sound is playing")
+			pass # Sound is playing
 		else:
-			print("SplashScreen: Splash sound failed to play (likely browser autoplay policy)")
+			pass # Sound not playing
 	else:
-		print("SplashScreen: No splash sound available")
+		pass # Splash sound not available
 	
 	# Only proceed if logo exists
 	if not logo:
-		print("SplashScreen: Logo not found, skipping to completion")
 		_on_splash_complete()
 		return
 	
@@ -104,18 +89,15 @@ func start_splash():
 	# When tween finishes, emit signal
 	splash_tween.finished.connect(_on_splash_complete)
 	
-	print("SplashScreen: Tween sequence created and started")
 
 func _on_splash_complete():
 	"""Called when splash animation completes"""
 	if not splash_completed:
-		print("SplashScreen: Splash complete, emitting signal")
 		splash_completed = true
 		splash_finished.emit()
 
 func _on_timer_timeout():
 	"""Fallback timer in case tween doesn't work"""
-	print("SplashScreen: Timer timeout fallback")
 	splash_finished.emit()
 
 func _input(event):
@@ -126,19 +108,15 @@ func _input(event):
 	if event is InputEventKey and event.pressed:
 		# Only allow skipping with Enter, Space, or Escape
 		if event.keycode in [KEY_ENTER, KEY_SPACE, KEY_ESCAPE]:
-			print("SplashScreen: Skip key pressed, skipping splash")
 			skip_splash()
 	elif event is InputEventJoypadButton and event.pressed:
 		# Allow any joypad button to skip
-		print("SplashScreen: Joypad button pressed, skipping splash")
 		skip_splash()
 	elif event is InputEventMouseButton and event.pressed:
 		# Allow mouse clicks to skip
-		print("SplashScreen: Mouse button pressed, skipping splash")
 		skip_splash()
 	elif event is InputEventScreenTouch and event.pressed:
 		# Allow touch to skip
-		print("SplashScreen: Touch detected, skipping splash")
 		skip_splash()
 
 func skip_splash():
@@ -149,7 +127,6 @@ func skip_splash():
 	# Stop splash sound immediately
 	if splash_sound and splash_sound.playing:
 		splash_sound.stop()
-		print("SplashScreen: Stopped elefante.wav sound")
 	
 	# Stop the tween to prevent it from completing later
 	if splash_tween:

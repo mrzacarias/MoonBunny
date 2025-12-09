@@ -4,10 +4,10 @@ extends Node3D
 class_name Level
 
 # Import GUI components
-const LevelGUI = preload("res://scripts/LevelGUI.gd")
+const LevelGUIClass = preload("res://scripts/LevelGUI.gd")
 
 signal level_finished(result_data: Dictionary)
-signal ring_hit(judgement: String, chain: int)
+signal ring_hit(judgement: String, chain: int, ring_type: String, is_type_specific: bool)
 signal music_started()
 
 # Constants from original - expanded movement area for better gameplay
@@ -75,7 +75,17 @@ var mouse_old_y: float = 0.0
 var mouse_factor: float = 240.0  # Same as original
 var target_position: Vector3  # Target position for smooth movement
 var movement_lerp_speed: float = 8.0  # Speed of smooth movement interpolation
-var using_pointer_input: bool = false  # Track if mouse/touch is being used
+# Input method tracking for smart switching
+enum InputMethod {
+	KEYBOARD,
+	MOUSE,
+	GAMEPAD,
+	TOUCH
+}
+var current_input_method: InputMethod = InputMethod.KEYBOARD
+var input_method_lock_timer: float = 0.0
+var INPUT_METHOD_LOCK_DURATION: float = 0.2  # Shorter lock for more responsive switching
+var using_pointer_input: bool = false  # Legacy compatibility flag
 
 # Animation variables for smooth LERP
 var base_rotation: Vector3 = Vector3(0, 180, 0)  # Base flying pose
@@ -84,7 +94,7 @@ var animation_lerp_speed: float = 6.0  # Speed of rotation animation
 var movement_velocity: Vector3 = Vector3.ZERO  # Smoothed movement velocity for animation
 
 # GUI elements (like original)
-var button_viewer: LevelGUI.ButtonViewer
+var button_viewer: LevelGUIClass.ButtonViewer
 # judgement_display is now handled by GameplayUI in Main.gd
 
 # Input handling
@@ -106,7 +116,6 @@ func _exit_tree():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _ready():
-	print("Level ready: ", level_name, " (", difficulty, ")")
 	
 	# Hide mouse cursor during gameplay for cleaner experience
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
@@ -146,9 +155,8 @@ func setup_audio():
 			audio_player.stream = music_stream
 			AudioManager.apply_standard_volume(audio_player, "level_music")
 			audio_container.add_child(audio_player)
-			print("Level: Loaded music for ", level_name, " from resource manager")
 		else:
-			print("Level: No music found for ", level_name, " in resource manager")
+			print("ERROR: Failed to load music file for level: ", level_name)
 	
 	# Load sound effects
 	miss_sound = AudioStreamPlayer.new()
@@ -179,14 +187,14 @@ func setup_graphics():
 	setup_skybox()
 	
 	# Check if mesh skybox has any materials (override or surface)
-	var skybox_has_materials = false
+	var _skybox_has_materials = false
 	if skybox:
 		if skybox.material_override:
-			skybox_has_materials = true
+			_skybox_has_materials = true
 		elif skybox.mesh:
 			for i in range(skybox.mesh.get_surface_count()):
 				if skybox.mesh.surface_get_material(i):
-					skybox_has_materials = true
+					_skybox_has_materials = true
 					break
 	
 	# Force environment sky for better web export brightness
@@ -210,7 +218,7 @@ func setup_bunny_actor():
 		capsule_mesh.radius = 0.3
 		capsule_mesh.height = 0.6
 		mesh_instance.mesh = capsule_mesh
-	
+		
 		# Apply fallback material
 		var fallback_material = StandardMaterial3D.new()
 		fallback_material.albedo_color = Color(1.0, 0.95, 0.9, 1.0)  # Slightly brighter bunny-like color for web
@@ -218,7 +226,6 @@ func setup_bunny_actor():
 		fallback_material.metallic = 0.0
 		mesh_instance.material_override = fallback_material
 		
-		print("Using fallback capsule mesh for bunny")
 		bunny_actor.add_child(mesh_instance)
 	else:
 		# Check if we got a full scene (GLB) or just a mesh (OBJ fallback)
@@ -244,16 +251,12 @@ func setup_bunny_actor():
 				
 				# Store reference for later use
 				bunny_actor.set_meta("ear_controller", ear_controller)
-				print("✅ Added ear animation controller to bunny")
 				
 				# Start wind animation if available
 				ear_controller.play_wind_animation()
-			else:
-				print("⚠️ No animations or skeleton found in bunny GLB")
 		else:
 			# This is just a MeshInstance3D (OBJ fallback or simple mesh)
 			bunny_actor.add_child(bunny_scene_or_mesh)
-			print("ℹ️ Added simple mesh (no animations available)")
 	
 	# Add custom properties like original
 	bunny_actor.set_meta("speed", Vector3.ZERO)
@@ -352,20 +355,18 @@ func adjust_lighting_for_platform():
 	"""Adjust lighting brightness for HTML platform - make objects darker"""
 	if OS.get_name() == "Web":
 		# Find and adjust DirectionalLight nodes (now 40% darker total)
-		var environment_node = get_node("Environment")
-		if environment_node:
-			for child in environment_node.get_children():
+		var env_node = get_node("Environment")
+		if env_node:
+			for child in env_node.get_children():
 				if child is DirectionalLight3D:
 					var original_energy = child.light_energy
 					child.light_energy = original_energy * 0.6  # 40% darker (was 0.8, now 0.6)
-					print("🌐 HTML: Reduced DirectionalLight energy from ", original_energy, " to ", child.light_energy)
 		
 		# Adjust camera environment ambient light if it exists (now 40% darker total)
 		if camera and camera.environment:
 			var env = camera.environment
 			var original_ambient = env.ambient_light_energy
 			env.ambient_light_energy = original_ambient * 0.6  # 40% darker (was 0.8, now 0.6)
-			print("🌐 HTML: Reduced ambient light energy from ", original_ambient, " to ", env.ambient_light_energy)
 
 func setup_environment_sky():
 	"""Setup environment-based sky as backup method"""
@@ -404,10 +405,8 @@ func setup_environment_sky():
 				env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 				env.sky_custom_fov = 0.0  # Use full panorama
 				
-				print("✅ Applied environment sky texture: ", sky_texture_path)
 				return
 	
-	print("⚠️ Could not load environment sky texture")
 
 # Material creation functions moved to ModelLoader.gd
 
@@ -437,7 +436,7 @@ func modify_mesh_materials(mesh_instance: MeshInstance3D):
 			var std_material = material as StandardMaterial3D
 			std_material.roughness = 1.0  # Maximum roughness for no reflections
 			std_material.metallic = 0.0   # No metallic properties
-			std_material.specular = 0.0   # No specular highlights
+			# Note: specular property removed in Godot 4.x - controlled by roughness and metallic
 			# Keep all other properties (textures, colors, etc.) unchanged
 
 func find_all_mesh_instances(node: Node) -> Array:
@@ -475,7 +474,7 @@ func create_fallback_terrain(index: int, patch_size: float, terrain_z: float, st
 	# Extra settings to eliminate reflections on terrain
 	material.roughness = 1.0  # Maximum roughness for no reflections
 	material.metallic = 0.0   # No metallic properties
-	material.specular = 0.0   # No specular highlights
+	# Note: specular property removed in Godot 4.x - controlled by roughness and metallic
 	terrain_instance.material_override = material
 	
 	terrain_container.add_child(terrain_instance)
@@ -522,7 +521,7 @@ func setup_terrain():
 func setup_gui():
 	"""Setup GUI elements like original gui.py"""
 	# Create button viewer (button timeline at bottom of screen)
-	button_viewer = LevelGUI.ButtonViewer.new(music_bpm)
+	button_viewer = LevelGUIClass.ButtonViewer.new(music_bpm)
 	gui_container.add_child(button_viewer)
 	
 	# Judgement display is now handled by GameplayUI in Main.gd
@@ -535,7 +534,6 @@ func cleanup_gui():
 	
 	# Judgement display is now handled by GameplayUI in Main.gd
 	
-	print("🧹 Level: GUI elements cleaned up")
 
 func setup_rings():
 	"""Setup rings from level data like original"""
@@ -627,22 +625,20 @@ func load_ring_data() -> Array:
 	var ring_data = []
 	
 	if level_name == "":
-		print("No level name specified")
 		return ring_data
 	
 	# Get ring content from resource manager
 	var ring_content = LevelResourceManager.get_level_rings(level_name)
 	if ring_content == "":
-		print("Ring file not found for: ", level_name)
 		return ring_data
 	
 	var lines = ring_content.split("\n")
 	var cumulative_time = 0.0
-	var line_number = 0
+	var _line_number = 0
 	
 	for line in lines:
 		line = line.strip_edges()
-		line_number += 1
+		_line_number += 1
 		
 		# Skip empty lines and comments
 		if line == "" or line.begins_with("#"):
@@ -651,14 +647,12 @@ func load_ring_data() -> Array:
 		# Parse line: "x, y; time; button" or "x,y ; time ; button"
 		var parts = line.split(";")
 		if parts.size() != 3:
-			print("Invalid line format at line ", line_number, ": ", line)
 			continue
 		
 		# Parse position - handle both "x, y" and "x,y" formats
 		var pos_str = parts[0].strip_edges()
 		var pos_parts = pos_str.split(",")
 		if pos_parts.size() != 2:
-			print("Invalid position format at line ", line_number, ": ", pos_str)
 			continue
 		
 		var x = pos_parts[0].strip_edges().to_float()
@@ -683,7 +677,6 @@ func load_ring_data() -> Array:
 		})
 		
 	
-	print("Loaded ", ring_data.size(), " rings from resource manager")
 	return ring_data
 
 func setup_input():
@@ -694,16 +687,14 @@ func setup_input():
 func load_level_header():
 	"""Load level header file to get BPM and other metadata from resource manager"""
 	if level_name == "":
-		print("No level name specified for header loading")
 		return
 	
 	# Use resource manager to get parsed header data
 	var level_data = LevelResourceManager.parse_level_header(level_name)
 	if level_data.has("BPM"):
 		music_bpm = level_data["BPM"]
-		print("Level: Loaded BPM ", music_bpm, " for ", level_name, " from resource manager")
 	else:
-		print("Level: No BPM found for ", level_name, " in resource manager")
+		print("ERROR: Failed to parse BPM from header file for level: ", level_name)
 
 func setup_tasks():
 	"""Setup continuous tasks like original ctask_ functions"""
@@ -737,13 +728,9 @@ func _start_music():
 			if music_time == 0.0:
 				# HTML delay pattern detected
 				timing_offset = 0.85
-				print("🔧 HTML DELAY DETECTED - Applying timing offset: ", timing_offset, "s")
-				print("DETECTED DELAY IS: ", timing_offset)
 			else:
 				# Normal timing
 				timing_offset = 0.0
-				print("🔧 NORMAL TIMING - No offset needed")
-				print("DETECTED DELAY IS: ", timing_offset)
 			calibration_complete = true
 		
 		# Emit signal to notify that music has started
@@ -797,19 +784,20 @@ func update_character_movement(current_time: float, music_time: float, delta: fl
 		# Handle mouse movement (like original control_mouse function)
 		handle_mouse_movement()
 		
-		# Handle keyboard movement (existing) - only if not using pointer input
-		if not using_pointer_input:
-			if button_map["left"]: s_x -= SPEED_SCALE
-			if button_map["right"]: s_x += SPEED_SCALE
-			if button_map["up"]: s_z += SPEED_SCALE
-			if button_map["down"]: s_z -= SPEED_SCALE
-			
-			# Apply keyboard movement with clamping like original
-			if s_x != 0 or s_z != 0:
-				bunny_actor.position.x = clamp(bunny_actor.position.x + s_x, FLY_AREA_L, FLY_AREA_R)
-				bunny_actor.position.z = clamp(bunny_actor.position.z + s_z, FLY_AREA_B, FLY_AREA_T)
-				# Update animations based on movement like original (amplify for visibility)
-				update_bunny_animation(s_x * 20.0, s_z * 20.0)
+		# Handle keyboard movement - always enabled alongside mouse/touch
+		if button_map["left"]: s_x -= SPEED_SCALE
+		if button_map["right"]: s_x += SPEED_SCALE
+		if button_map["up"]: s_z += SPEED_SCALE
+		if button_map["down"]: s_z -= SPEED_SCALE
+		
+		# Apply keyboard movement with clamping like original
+		if s_x != 0 or s_z != 0:
+			bunny_actor.position.x = clamp(bunny_actor.position.x + s_x, FLY_AREA_L, FLY_AREA_R)
+			bunny_actor.position.z = clamp(bunny_actor.position.z + s_z, FLY_AREA_B, FLY_AREA_T)
+			# Update animations based on movement like original (amplify for visibility)
+			update_bunny_animation(s_x * 20.0, s_z * 20.0)
+			# Set keyboard as input method when using keyboard
+			set_input_method(InputMethod.KEYBOARD)
 		
 		# Handle gamepad movement
 		handle_gamepad_movement()
@@ -817,7 +805,8 @@ func update_character_movement(current_time: float, music_time: float, delta: fl
 		last_control_update = current_time
 	
 	# Apply smooth movement for mouse/touch (every frame)
-	apply_smooth_movement(delta)
+	if current_input_method == InputMethod.MOUSE or current_input_method == InputMethod.TOUCH:
+		apply_smooth_movement(delta)
 	
 	# Apply smooth animation (every frame)
 	apply_smooth_animation(delta)
@@ -855,6 +844,10 @@ func handle_mouse_movement():
 	"""Handle mouse movement with precise screen-to-world coordinate mapping"""
 	if not camera:
 		return
+	
+	# Lock mouse movement when gamepad is being used
+	if current_input_method == InputMethod.GAMEPAD:
+		return
 		
 	var mouse_pos = get_viewport().get_mouse_position()
 	var viewport_size = get_viewport().get_visible_rect().size
@@ -873,24 +866,30 @@ func handle_mouse_movement():
 	pos_x = clamp(pos_x, FLY_AREA_L, FLY_AREA_R)
 	pos_z = clamp(pos_z, FLY_AREA_B, FLY_AREA_T)
 	
-	# Set target position for smooth movement
-	if bunny_actor:
-		target_position.x = pos_x
-		target_position.z = pos_z
-		using_pointer_input = true
-		
-		# Calculate smooth movement velocity for animation
-		var mouse_delta_x = mouse_pos.x - mouse_old_x
-		var mouse_delta_y = mouse_pos.y - mouse_old_y
-		
-		# Scale mouse delta to reasonable animation values (increased sensitivity)
-		var s_x = clamp(mouse_delta_x * 0.05, -2.0, 2.0)
-		var s_z = clamp(-mouse_delta_y * 0.05, -2.0, 2.0)  # Invert Y for correct up/down mapping
-		
-		update_bunny_animation(s_x, s_z)
-		
-		mouse_old_x = mouse_pos.x
-		mouse_old_y = mouse_pos.y
+	# Check if mouse has moved significantly to activate mouse input
+	var mouse_delta_x = mouse_pos.x - mouse_old_x
+	var mouse_delta_y = mouse_pos.y - mouse_old_y
+	var mouse_movement = Vector2(mouse_delta_x, mouse_delta_y).length()
+	
+	if mouse_movement > 5.0:  # Threshold to activate mouse input
+		set_input_method(InputMethod.MOUSE)
+	
+	# Only process mouse positioning if mouse input is active
+	if current_input_method == InputMethod.MOUSE:
+		# Set target position for smooth movement
+		if bunny_actor:
+			target_position.x = pos_x
+			target_position.z = pos_z
+			
+			# Scale mouse delta to reasonable animation values (increased sensitivity)
+			var s_x = clamp(mouse_delta_x * 0.05, -2.0, 2.0)
+			var s_z = clamp(-mouse_delta_y * 0.05, -2.0, 2.0)  # Invert Y for correct up/down mapping
+			
+			update_bunny_animation(s_x, s_z)
+	
+	# Always update mouse position for movement detection
+	mouse_old_x = mouse_pos.x
+	mouse_old_y = mouse_pos.y
 
 func handle_touch_movement():
 	"""Handle touch screen movement with smooth LERP"""
@@ -920,23 +919,28 @@ func handle_gamepad_movement():
 	var s_x = left_stick_x * gamepad_speed
 	var s_z = -left_stick_y * gamepad_speed  # Invert Y axis
 	
-	if bunny_actor and (abs(s_x) > 0 or abs(s_z) > 0):
-		using_pointer_input = false  # Switch back to direct control
-		bunny_actor.position.x = clamp(bunny_actor.position.x + s_x, FLY_AREA_L, FLY_AREA_R)
-		bunny_actor.position.z = clamp(bunny_actor.position.z + s_z, FLY_AREA_B, FLY_AREA_T)
-		# Update animation for gamepad movement
-		update_bunny_animation(s_x * 10.0, s_z * 10.0)  # Scale up for better animation response
+	# Check if gamepad stick has moved to activate gamepad input (always check, regardless of current method)
+	if abs(left_stick_x) > deadzone or abs(left_stick_y) > deadzone:
+		set_input_method(InputMethod.GAMEPAD, true)  # Always bypass lock for immediate response
+	
+	# Apply movement only if gamepad is active
+	if current_input_method == InputMethod.GAMEPAD:
+		if bunny_actor and (abs(s_x) > 0 or abs(s_z) > 0):
+			bunny_actor.position.x = clamp(bunny_actor.position.x + s_x, FLY_AREA_L, FLY_AREA_R)
+			bunny_actor.position.z = clamp(bunny_actor.position.z + s_z, FLY_AREA_B, FLY_AREA_T)
+			# Update animation for gamepad movement
+			update_bunny_animation(s_x * 10.0, s_z * 10.0)  # Scale up for better animation response
 
 func apply_smooth_movement(delta: float):
 	"""Apply smooth LERP movement for mouse/touch input"""
-	if not bunny_actor or not using_pointer_input:
+	if not bunny_actor:
 		return
 	
 	# Smoothly interpolate to target position
 	bunny_actor.position.x = lerp(bunny_actor.position.x, target_position.x, movement_lerp_speed * delta)
 	bunny_actor.position.z = lerp(bunny_actor.position.z, target_position.z, movement_lerp_speed * delta)
 
-func apply_smooth_animation(delta: float):
+func apply_smooth_animation(_delta: float):
 	"""Apply smooth LERP animation for bunny rotations"""
 	if not bunny_actor:
 		return
@@ -1017,7 +1021,7 @@ func check_next_ring(music_time: float):
 			judgement_stats["MISS"] += 1
 			
 			# Show miss judgement feedback like original
-			ring_hit.emit("MISS", chain)
+			ring_hit.emit("MISS", chain, ring["button"], false)  # MISS is not type-specific
 			
 			ring["cleared"] = true
 			
@@ -1067,26 +1071,40 @@ func _input(event):
 			# Movement controls - use arrow keys like original
 			KEY_LEFT:
 				button_map["left"] = pressed
-				if pressed: using_pointer_input = false
+				if pressed: set_input_method(InputMethod.KEYBOARD)
 			KEY_RIGHT:
 				button_map["right"] = pressed
-				if pressed: using_pointer_input = false
+				if pressed: set_input_method(InputMethod.KEYBOARD)
 			KEY_UP:
 				button_map["up"] = pressed
-				if pressed: using_pointer_input = false
+				if pressed: set_input_method(InputMethod.KEYBOARD)
 			KEY_DOWN:
 				button_map["down"] = pressed
-				if pressed: using_pointer_input = false
+				if pressed: set_input_method(InputMethod.KEYBOARD)
 			
-			# Ring hitting controls - WASD like original
+			# Ring hitting controls - WASD like original with type-specific confirmation
 			KEY_S:
-				if pressed: check_button_press("A")  # S = A button
-			KEY_D:
-				if pressed: check_button_press("B")  # D = B button	 
+				if pressed: 
+					set_input_method(InputMethod.KEYBOARD)
+					check_button_press("A")  # S = A button (Ring type A)
 			KEY_A:
-				if pressed: check_button_press("C")  # A = C button
+				if pressed: 
+					set_input_method(InputMethod.KEYBOARD)
+					check_button_press("C")  # A = C button (Ring type C)
+			KEY_D:
+				if pressed: 
+					set_input_method(InputMethod.KEYBOARD)
+					check_button_press("B")  # D = B button (Ring type B)
 			KEY_W:
-				if pressed: check_button_press("D")  # W = D button
+				if pressed: 
+					set_input_method(InputMethod.KEYBOARD)
+					check_button_press("D")  # W = D button (Ring type D)
+			
+			# Centralized hit button - spacebar for keyboard (works for all ring types)
+			KEY_SPACE:
+				if pressed: 
+					set_input_method(InputMethod.KEYBOARD)
+					check_centralized_button_press()
 			
 			# Test mode key for ear animations
 			KEY_T:
@@ -1095,11 +1113,15 @@ func _input(event):
 	# Handle touch screen input
 	elif event is InputEventScreenTouch:
 		if event.pressed:
+			set_input_method(InputMethod.TOUCH)
 			# Convert touch position to target bunny position with smooth LERP
 			handle_touch_at_position(event.position)
+			# Touch tap hits rings (works for all ring types)
+			check_centralized_button_press()
 	
 	elif event is InputEventScreenDrag:
-		# Handle touch drag for smooth movement
+		# Handle touch drag for smooth movement (no hit on drag)
+		set_input_method(InputMethod.TOUCH)
 		handle_touch_at_position(event.position)
 	
 	# Handle mouse movement (when mouse moves)
@@ -1112,24 +1134,22 @@ func _input(event):
 		if event.pressed:
 			match event.button_index:
 				MOUSE_BUTTON_LEFT:
-					check_button_press("A")
-				MOUSE_BUTTON_RIGHT:
-					check_button_press("B")
-				MOUSE_BUTTON_MIDDLE:
-					check_button_press("C")
+					set_input_method(InputMethod.MOUSE)
+					check_centralized_button_press()  # Mouse click works for all ring types
 	
 	# Handle gamepad button presses for ring hitting
 	elif event is InputEventJoypadButton:
 		if event.pressed:
+			set_input_method(InputMethod.GAMEPAD)
 			match event.button_index:
 				JOY_BUTTON_A:
-					check_button_press("A")
-				JOY_BUTTON_B:
-					check_button_press("B")
+					check_button_press("A")  # A button = Ring type A
 				JOY_BUTTON_X:
-					check_button_press("C")
+					check_button_press("B")  # X button = Ring type B
+				JOY_BUTTON_B:
+					check_button_press("C")  # B button = Ring type C
 				JOY_BUTTON_Y:
-					check_button_press("D")
+					check_button_press("D")  # Y button = Ring type D
 
 func handle_touch_at_position(touch_pos: Vector2):
 	"""Handle touch input at given screen position with precise coordinate mapping"""
@@ -1184,6 +1204,66 @@ func check_button_press(button: String):
 	if ring["button"] == button and not ring["cleared"]:
 		var judgement = ""
 		
+		# Timing windows matching original game exactly with 50% bonus for type-specific hits
+		var base_score = 0
+		if time_diff <= 0.08:
+			judgement = "PERFECT"
+			base_score = 200  # Original score values
+			chain += 1
+		elif time_diff <= 0.2:
+			judgement = "GOOD"
+			base_score = 100
+			chain += 1
+		elif time_diff <= 0.3:
+			judgement = "OK"
+			base_score = 50
+			chain += 1
+		elif time_diff <= 0.5:
+			judgement = "BAD"
+			base_score = 5
+			chain = 0
+		else:
+			return  # Too far off
+		
+		# Apply 50% bonus for using type-specific key
+		var bonus_score = int(base_score * 1.5)
+		score += bonus_score
+		
+		# Check position accuracy - use world coordinates for both
+		var bunny_pos = Vector2(bunny_actor.position.x, bunny_actor.position.z)
+		var ring_world_pos = ring.get("world_position", Vector2.ZERO)
+		var distance = bunny_pos.distance_to(ring_world_pos)
+		
+		# Increase collision radius to be more forgiving - ring outer radius is 1.3
+		if distance < 1.5:  # Within ring collision area
+			judgement_stats[judgement] += 1
+			ring["cleared"] = true
+			
+			# Button hit feedback like original: self.btn_viewer.button_hit()
+			if button_viewer:
+				button_viewer.button_hit()
+			
+			ring_hit.emit(judgement, chain, ring["button"], true)  # Type-specific hit
+			
+			# Remove ring
+			ring["node"].queue_free()
+			ring_list.pop_front()
+
+func check_centralized_button_press():
+	"""Check if centralized button press hits a ring - ignores button type (for mouse/touch)"""
+	var music_time = audio_player.get_playback_position()
+	if ring_list.is_empty():
+		return
+	
+	var ring = ring_list[0]
+	# Apply timing offset for hit detection synchronization
+	var adjusted_music_time = music_time + timing_offset
+	var time_diff = abs(ring["time"] - adjusted_music_time)
+	
+	# Check timing window regardless of button type (centralized hit)
+	if not ring["cleared"]:
+		var judgement = ""
+		
 		# Timing windows matching original game exactly
 		if time_diff <= 0.08:
 			judgement = "PERFECT"
@@ -1218,11 +1298,58 @@ func check_button_press(button: String):
 			if button_viewer:
 				button_viewer.button_hit()
 			
-			ring_hit.emit(judgement, chain)
+			ring_hit.emit(judgement, chain, ring["button"], false)  # Centralized hit (not type-specific)
 			
 			# Remove ring
 			ring["node"].queue_free()
 			ring_list.pop_front()
+
+func get_ring_color(button_type: String) -> Color:
+	"""Get the color for a ring type"""
+	match button_type:
+		"A": 
+			return Color(0.3, 0.5, 1.0, 1.0)  # Bright blue
+		"B": 
+			return Color(1.0, 0.2, 1.0, 1.0)  # Bright magenta (swapped from C)
+		"C": 
+			return Color(1.0, 0.2, 0.2, 1.0)  # Bright red (swapped from B)
+		"D": 
+			return Color(1.0, 1.0, 0.2, 1.0)  # Bright yellow
+		_:
+			return Color(1.0, 1.0, 1.0, 1.0)  # White default
+
+func set_input_method(method: InputMethod, bypass_lock: bool = false):
+	"""Set the current input method and disable others if needed"""
+	var current_time = Time.get_ticks_msec() / 1000.0
+	
+	# Check if switching between keyboard and mouse (same controller group)
+	var is_keyboard_mouse_switch = (
+		(current_input_method == InputMethod.KEYBOARD and method == InputMethod.MOUSE) or
+		(current_input_method == InputMethod.MOUSE and method == InputMethod.KEYBOARD)
+	)
+	
+	# Prevent rapid switching within lock duration (unless bypassing or switching within keyboard/mouse group)
+	if not bypass_lock and not is_keyboard_mouse_switch and current_time - input_method_lock_timer < INPUT_METHOD_LOCK_DURATION:
+		return
+	
+	if current_input_method != method:
+		current_input_method = method
+		
+		# Only set lock timer if not bypassing and not switching within keyboard/mouse group
+		if not bypass_lock and not is_keyboard_mouse_switch:
+			input_method_lock_timer = current_time
+		
+		# Disable conflicting input methods
+		match method:
+			InputMethod.KEYBOARD:
+				using_pointer_input = false
+			InputMethod.MOUSE:
+				using_pointer_input = true
+			InputMethod.GAMEPAD:
+				using_pointer_input = false
+			InputMethod.TOUCH:
+				using_pointer_input = true
+		
 
 func end_level():
 	"""End the level and return to menu like original"""
@@ -1238,7 +1365,6 @@ func end_level():
 	# Count all remaining rings as misses when level ends early
 	var remaining_rings = ring_list.size()
 	if remaining_rings > 0:
-		print("Level ended early - counting ", remaining_rings, " remaining rings as misses")
 		judgement_stats["MISS"] += remaining_rings
 		
 		# Clean up remaining ring nodes
@@ -1250,15 +1376,23 @@ func end_level():
 	# Clean up GUI elements
 	cleanup_gui()
 	
-	print("Level finished! Final score: ", score)
-	print("Stats: ", judgement_stats)
-	print("Total rings: ", n_rings)
+	
+	# Calculate rank for high score tracking
+	var rank = calculate_rank()
+	
+	# Update high score if this is a new record
+	var is_new_high_score = HighScoreManager.update_high_score(level_name, score, rank)
+	
+	if is_new_high_score:
+		pass # High score updated in HighScoreManager
 	
 	# Create result data structure like original ResultScreen expects
 	var result_data = {
 		"stats": judgement_stats,
 		"score": score,
-		"n_rings": n_rings
+		"n_rings": n_rings,
+		"rank": rank,
+		"is_new_high_score": is_new_high_score
 	}
 	
 	# Emit level finished like original

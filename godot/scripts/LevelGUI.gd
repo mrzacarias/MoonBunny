@@ -21,10 +21,10 @@ class ButtonViewer extends Control:
 	
 	# Button colors matching ring colors from ModelLoader
 	var button_colors = {
-		"A": Color(0.3, 0.5, 1.0, 1.0),  # Bright blue
-		"B": Color(1.0, 0.2, 0.2, 1.0),  # Bright red
-		"C": Color(1.0, 0.2, 1.0, 1.0),  # Bright magenta
-		"D": Color(1.0, 1.0, 0.2, 1.0)   # Bright yellow
+		"A": Color(0.4, 0.3, 0.8, 1.0),  # Purple/Blue (from cross texture)
+		"B": Color(0.6, 0.2, 0.2, 1.0),  # Dark Red/Maroon (from circle texture - right position)
+		"C": Color(0.8, 0.3, 0.8, 1.0),  # Purple/Magenta (from square texture - left position)
+		"D": Color(0.3, 0.8, 0.3, 1.0)   # Green (from triangle texture)
 	}
 	
 	func _init(bpm: float):
@@ -52,7 +52,6 @@ class ButtonViewer extends Control:
 		if ResourceLoader.exists(circle_texture_path):
 			circle_texture = load(circle_texture_path)
 		else:
-			print("⚠️ Circle texture not found: ", circle_texture_path)
 			# Create fallback circle texture
 			var fallback_texture = ImageTexture.new()
 			var image = Image.create(64, 64, false, Image.FORMAT_RGBA8)
@@ -100,7 +99,6 @@ class ButtonViewer extends Control:
 	func append_button(button: String, ring_y: float):
 		"""Add button to timeline like original append_button"""
 		if not button in button_textures:
-			print("⚠️ Unknown button: ", button)
 			return
 			
 		var btn_image = TextureRect.new()
@@ -224,7 +222,6 @@ class JudgementDisplay extends Control:
 		if judgement in judgement_textures:
 			judgement_image.texture = judgement_textures[judgement]
 		else:
-			print("⚠️ Unknown judgement: ", judgement)
 			return
 		
 		# Always show image in full color (no color tinting needed for images)

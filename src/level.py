@@ -321,13 +321,13 @@ class Level(DirectObject.DirectObject):
             color = None
             
             if button == 'A':
-                color = (.4, .44, .81, 1)
+                color = (.4, .3, .8, 1)  # Purple/Blue (from cross texture)
             elif button == 'B':
-                color = (1, .3, .3, 1)
+                color = (.6, .2, .2, 1)  # Dark Red/Maroon (from circle texture - right position)
             elif button == 'C':
-                color = (.99, .0, 1, 1)
+                color = (.8, .3, .8, 1)  # Purple/Magenta (from square texture - left position)
             elif button == 'D':
-                color = (.39, 1, .62, 1)
+                color = (.3, .8, .3, 1)  # Green (from triangle texture)
             
             ring.setY(ringY)
             ring.reparentTo(self.rootNode)

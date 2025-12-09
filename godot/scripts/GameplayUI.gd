@@ -42,7 +42,7 @@ func setup_judgement_textures():
 	judgement_textures["BAD"] = load("res://assets/textures/j_bad.png")
 	judgement_textures["MISS"] = load("res://assets/textures/j_miss.png")
 
-func show_judgement(judgement: String):
+func show_judgement(judgement: String, ring_type: String = "", is_type_specific: bool = false):
 	"""Show judgement with animation using images"""
 	if not judgement_image:
 		return
@@ -51,11 +51,14 @@ func show_judgement(judgement: String):
 	if judgement in judgement_textures:
 		judgement_image.texture = judgement_textures[judgement]
 	else:
-		print("⚠️ Unknown judgement: ", judgement)
 		return
 	
 	# Always show image in full color
 	judgement_image.modulate = Color(1, 1, 1, 1)  # Full opacity
+	
+	# Create ring explosion effect for PERFECT and GOOD hits with type-specific buttons only
+	if judgement in ["PERFECT", "GOOD"] and is_type_specific:
+		create_2d_ring_explosion(ring_type)
 	
 	# Animate appearance and fade
 	if judgement_tween:
@@ -66,5 +69,76 @@ func show_judgement(judgement: String):
 	judgement_tween.tween_property(judgement_image, "modulate:a", 1.0, 0.1)
 	judgement_tween.tween_interval(0.8)
 	judgement_tween.tween_property(judgement_image, "modulate:a", 0.0, 0.5)
+
+func create_2d_ring_explosion(ring_type: String):
+	"""Create 2D ring explosion effect from judgement image position using button textures"""
+	if not judgement_image:
+		return
+	
+	# Get the center position of the judgement image, adjusted by offset
+	var center_pos = judgement_image.global_position + judgement_image.size / 2
+	center_pos.x -= 35  # Move 35px to the left
+	center_pos.y -= 100  # Move 100px up (90 + 10 more)
+	
+	# Create 5 ring particles for a cleaner effect
+	for i in range(5):
+		var ring_particle = create_2d_ring_particle(ring_type)
+		add_child(ring_particle)
+		
+		# Position at the adjusted center position
+		ring_particle.position = center_pos
+		
+		# Make particles appear behind the judgement image
+		ring_particle.z_index = -1
+		
+		# Calculate explosion direction (5 directions in a circle)
+		var angle = (i / 5.0) * 2.0 * PI
+		var distance = 100.0  # Reasonable distance for visibility
+		var target_pos = center_pos + Vector2(cos(angle) * distance, sin(angle) * distance)
+		
+		# Animate the explosion
+		var tween = create_tween()
+		tween.set_parallel(true)
+		
+		# Move outward
+		tween.tween_property(ring_particle, "position", target_pos, 0.8)
+		# Fade out
+		tween.tween_property(ring_particle, "modulate:a", 0.0, 0.8)
+		# Scale up slightly
+		tween.tween_property(ring_particle, "scale", Vector2(1.5, 1.5), 0.8)
+		
+		# Clean up after animation
+		tween.finished.connect(ring_particle.queue_free)
+
+func create_2d_ring_particle(ring_type: String) -> TextureRect:
+	"""Create a 2D ring particle using the appropriate button texture"""
+	var particle = TextureRect.new()
+	
+	# Load the appropriate button texture based on ring type
+	var button_texture: Texture2D
+	match ring_type:
+		"A":
+			button_texture = load("res://assets/textures/b_cross.png")
+		"B":
+			button_texture = load("res://assets/textures/b_circle.png")  # Swapped from C
+		"C":
+			button_texture = load("res://assets/textures/b_square.png")  # Swapped from B
+		"D":
+			button_texture = load("res://assets/textures/b_triangle.png")
+		_:
+			button_texture = load("res://assets/textures/circle.png")  # Fallback
+	
+	particle.texture = button_texture
+	
+	# Set size - make it visible but not too large
+	particle.size = Vector2(30, 30)
+	
+	# Set color with transparency for subtle effect
+	particle.modulate = Color(1.0, 1.0, 1.0, 0.5)  # White with 0.5 opacity
+	
+	# Center the texture
+	particle.pivot_offset = particle.size / 2
+	
+	return particle
 
 # State management is now handled by Main.gd

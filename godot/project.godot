@@ -19,6 +19,7 @@ config/icon="res://assets/textures/title.png"
 [autoload]
 
 LevelResourceManager="*res://scripts/LevelResourceManager.gd"
+HighScoreManager="*res://scripts/HighScoreManager.gd"
 
 [debug]
 
