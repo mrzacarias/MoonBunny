@@ -8,6 +8,7 @@ var level_images: Dictionary = {}
 var level_music: Dictionary = {}
 var level_headers: Dictionary = {}
 var level_rings: Dictionary = {}
+var sound_effects: Dictionary = {}
 
 # Available levels (automatically detected, excluding training)
 var available_levels: Array[String] = []
@@ -76,14 +77,18 @@ func discover_available_levels():
 func preload_all_resources():
 	"""Preload level resources - optimized for web performance"""
 	
+	# Always preload sound effects first (small files, prevent stuttering)
+	preload_all_sound_effects()
+	
 	# Always preload training level for main menu access
 	preload_level_resources("training")
 	
-	# For web, only preload metadata, not music files
+	# For web, preload all music files to prevent stuttering
 	if OS.get_name() == "Web":
+		# Preload all music files for web to prevent audio stuttering
 		for level_name in available_levels:
-			preload_level_metadata_only(level_name)
-		print("Web optimization: Music files will be loaded on-demand")
+			preload_level_resources(level_name)
+		print("Web: All audio files preloaded to prevent stuttering")
 	else:
 		# Desktop: preload everything
 		for level_name in available_levels:
@@ -107,6 +112,7 @@ func preload_level_resources(level_name: String):
 	var music = load(music_path)
 	if music:
 		level_music[level_name] = music
+		print("Preloaded music: ", level_name)
 	else:
 		print("ERROR: Failed to load music file: ", music_path)
 	
@@ -161,15 +167,12 @@ func get_level_image(level_name: String) -> Texture2D:
 	return level_images.get(level_name, null)
 
 func get_level_music(level_name: String) -> AudioStream:
-	# Check if already loaded
+	# Always return preloaded music if available
 	if level_music.has(level_name):
 		return level_music[level_name]
 	
-	# For web, load on-demand
-	if OS.get_name() == "Web":
-		return load_music_on_demand(level_name)
-	
-	return level_music.get(level_name, null)
+	# If not preloaded, load it now and cache it
+	return load_music_on_demand(level_name)
 
 func load_music_on_demand(level_name: String) -> AudioStream:
 	"""Load music file on-demand for web performance"""
@@ -201,6 +204,32 @@ func preload_level_metadata_only(level_name: String):
 
 func get_level_header(level_name: String) -> String:
 	return level_headers.get(level_name, "")
+
+func preload_all_sound_effects():
+	"""Preload all sound effects to prevent stuttering"""
+	var sound_files = [
+		"miss.ogg",
+		"start_level.ogg",
+		"always.ogg",
+		"elefante.ogg",
+		"menu.ogg"
+	]
+	
+	for sound_file in sound_files:
+		var sound_path = "res://assets/sounds/" + sound_file
+		if ResourceLoader.exists(sound_path):
+			var sound_stream = load(sound_path)
+			if sound_stream:
+				sound_effects[sound_file] = sound_stream
+				print("Preloaded sound effect: ", sound_file)
+			else:
+				print("ERROR: Failed to load sound effect: ", sound_path)
+		else:
+			print("WARNING: Sound effect not found: ", sound_path)
+
+func get_sound_effect(sound_name: String) -> AudioStream:
+	"""Get a preloaded sound effect"""
+	return sound_effects.get(sound_name, null)
 
 func get_level_rings(level_name: String) -> String:
 	return level_rings.get(level_name, "")

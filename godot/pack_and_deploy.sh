@@ -44,7 +44,7 @@ if [ $EXPORT_EXIT_CODE -eq 0 ]; then
         
         # Create compressed archive in the root MoonBunny directory
         echo "📦 Creating compressed archive..."
-        ARCHIVE_NAME="../html.zip"
+        ARCHIVE_NAME="../moonbunny-html.zip"
         
         # Remove old archive if it exists
         if [ -f "$ARCHIVE_NAME" ]; then
@@ -58,7 +58,7 @@ if [ $EXPORT_EXIT_CODE -eq 0 ]; then
         
         if [ -f "$ARCHIVE_NAME" ]; then
             ARCHIVE_SIZE=$(ls -lh "$ARCHIVE_NAME" | awk '{print $5}')
-            echo "✅ Archive created: html.zip ($ARCHIVE_SIZE)"
+            echo "✅ Archive created: moonbunny-html.zip ($ARCHIVE_SIZE)"
             echo "📁 Archive location: $(realpath $ARCHIVE_NAME)"
             
             # Deploy to itch.io using butler

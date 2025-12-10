@@ -38,6 +38,9 @@ var is_playing: bool = false
 var score: int = 0
 var chain: int = 0
 var terrain_offset: float = 0.0  # Separate terrain position tracking
+var terrain_update_timer: float = 0.0  # Throttle terrain updates
+const TERRAIN_UPDATE_INTERVAL: float = 0.1  # Update terrain every 100ms instead of every frame
+var terrain_counter: int = 0  # Counter for continuous terrain generation
 
 # Automatic delay detection for visual synchronization
 var timing_offset: float = 0.0  # Calculated timing offset to apply to player position
@@ -124,6 +127,10 @@ func _ready():
 	# Hide mouse cursor during gameplay for cleaner experience
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	
+	# Set frame rate cap for web to prevent performance spikes
+	if OS.get_name() == "Web":
+		Engine.max_fps = 60
+	
 	# Load level header to get BPM and other info
 	load_level_header()
 	
@@ -162,21 +169,25 @@ func setup_audio():
 		else:
 			print("ERROR: Failed to load music file for level: ", level_name)
 	
-	# Load sound effects
+	# Load sound effects from preloaded resources
 	miss_sound = AudioStreamPlayer.new()
-	var miss_stream = load("res://assets/sounds/miss.ogg")
+	var miss_stream = LevelResourceManager.get_sound_effect("miss.ogg")
 	if miss_stream:
 		miss_sound.stream = miss_stream
 		AudioManager.apply_standard_volume(miss_sound, "sfx")
 		audio_container.add_child(miss_sound)
+	else:
+		print("ERROR: Failed to get preloaded miss sound effect")
 	
-	# Load start level sound
+	# Load start level sound from preloaded resources
 	start_level_sound = AudioStreamPlayer.new()
-	var start_stream = load("res://assets/sounds/start_level.ogg")
+	var start_stream = LevelResourceManager.get_sound_effect("start_level.ogg")
 	if start_stream:
 		start_level_sound.stream = start_stream
 		AudioManager.apply_standard_volume(start_level_sound, "sfx")
 		audio_container.add_child(start_level_sound)
+	else:
+		print("ERROR: Failed to get preloaded start level sound effect")
 
 func setup_graphics():
 	"""Setup 3D graphics like original"""
@@ -419,36 +430,49 @@ func override_bunny_materials(bunny_scene: Node3D):
 			modify_bunny_mesh_materials(mesh_instance)
 
 func modify_mesh_materials(mesh_instance: MeshInstance3D):
-	"""Modify materials on a mesh instance to remove reflections while preserving textures"""
+	"""Create new materials for mesh instance to avoid cumulative darkening"""
 	if not mesh_instance.mesh:
 		return
 	
 	# Check all surface materials
 	for surface_idx in range(mesh_instance.mesh.get_surface_count()):
-		var material = mesh_instance.get_surface_override_material(surface_idx)
-		if not material:
-			material = mesh_instance.mesh.surface_get_material(surface_idx)
+		var original_material = mesh_instance.get_surface_override_material(surface_idx)
+		if not original_material:
+			original_material = mesh_instance.mesh.surface_get_material(surface_idx)
 		
-		if material and material is StandardMaterial3D:
-			# Modify the existing material properties to remove reflections
-			var std_material = material as StandardMaterial3D
-			std_material.roughness = 1.0  # Maximum roughness for no reflections
-			std_material.metallic = 0.0   # No metallic properties
+		if original_material and original_material is StandardMaterial3D:
+			# Create a NEW material to avoid modifying shared resources
+			var new_material = StandardMaterial3D.new()
+			var original_std = original_material as StandardMaterial3D
 			
-			# Apply HTML brightness adjustment for terrain
+			# Copy essential properties from original
+			new_material.albedo_texture = original_std.albedo_texture
+			new_material.albedo_color = original_std.albedo_color
+			new_material.normal_texture = original_std.normal_texture
+			new_material.roughness_texture = original_std.roughness_texture
+			new_material.metallic_texture = original_std.metallic_texture
+			
+			# Set properties to remove reflections
+			new_material.roughness = 1.0  # Maximum roughness for no reflections
+			new_material.metallic = 0.0   # No metallic properties
+			
+			# Apply HTML brightness adjustment ONLY ONCE to the new material
 			if OS.get_name() == "Web":
-				# Darken the albedo color by 10% for HTML (was 30%, now 20% brighter)
-				var current_color = std_material.albedo_color
-				std_material.albedo_color = Color(
-					current_color.r * 0.9,
-					current_color.g * 0.9, 
-					current_color.b * 0.9,
-					current_color.a
+				# Apply 10% darkening to the new material's base color
+				var base_color = original_std.albedo_color
+				new_material.albedo_color = Color(
+					base_color.r * 0.9,
+					base_color.g * 0.9, 
+					base_color.b * 0.9,
+					base_color.a
 				)
 			
 			# Add depth bias to prevent z-fighting between terrain patches
-			std_material.depth_offset_enabled = true
-			std_material.depth_offset_bias = randf_range(-0.001, 0.001)  # Small random depth bias
+			new_material.depth_offset_enabled = true
+			new_material.depth_offset_bias = randf_range(-0.001, 0.001)  # Small random depth bias
+			
+			# Apply the new material as an override
+			mesh_instance.set_surface_override_material(surface_idx, new_material)
 
 func modify_bunny_mesh_materials(mesh_instance: MeshInstance3D):
 	"""Modify materials on bunny mesh instance for HTML brightness"""
@@ -490,10 +514,10 @@ func find_all_mesh_instances(node: Node) -> Array:
 
 func setup_terrain():
 	"""Setup terrain patches like original"""
-	# Reduce terrain patches for web performance
-	var terrain_patches = 30
+	# Set terrain patches based on platform
+	var terrain_patches = 20  # Default for desktop
 	if OS.get_name() == "Web":
-		terrain_patches = 20  # Reduce by 33% for web
+		terrain_patches = 10  # Reduced for web performance
 	
 	const TERRAIN_Z = -15.0
 	var terrain_patch_size = TERRAIN_PATCH_SIZE  # Use consistent size for GLB files
@@ -501,6 +525,9 @@ func setup_terrain():
 	# Start terrain earlier to cover player starting position
 	# Player starts at Y=0, camera at Y=-2.5, so we need terrain to start before that
 	var terrain_start_offset = -50.0  # Start terrain well before player position
+	
+	# Initialize terrain counter for continuous generation
+	terrain_counter = terrain_patches - 1  # Start counter after initial patches
 	
 	for i in range(terrain_patches):
 		# Use all 8 terrain types cycling through them
@@ -799,8 +826,11 @@ func _process(_delta):
 	# Check rings (ctask_checkNextRing equivalent)
 	check_next_ring(music_time)
 	
-	# Update terrain (ctask_terrainPatch equivalent)
-	update_terrain_patches(music_time)
+	# Update terrain less frequently for performance
+	terrain_update_timer += _delta
+	if terrain_update_timer >= TERRAIN_UPDATE_INTERVAL:
+		update_terrain_patches(music_time)
+		terrain_update_timer = 0.0
 	
 	# Check for level end (ctask_checkEnd equivalent)
 	check_level_end(music_time)
@@ -1122,7 +1152,7 @@ func check_next_ring(music_time: float):
 			ring_list.pop_front()
 
 func update_terrain_patches(_music_time: float):
-	"""Update terrain patches like original ctask_terrainPatch"""
+	"""Update terrain patches - create continuous treadmill effect"""
 	if terrain_patch_list.is_empty():
 		return
 		
@@ -1133,12 +1163,32 @@ func update_terrain_patches(_music_time: float):
 		var last_patch = terrain_patch_list[-1]
 		var safe_patch_size = TERRAIN_PATCH_SIZE  # For GLB files
 		
-		# Move closest patch to the end with proper spacing and random Z offset to prevent z-fighting
-		var z_offset = randf_range(-0.05, 0.05)
-		closest_patch.position = Vector3(0, last_patch.position.y + safe_patch_size, -15.0 + z_offset)
+		# Remove the old patch that's behind the camera
+		closest_patch.queue_free()
+		terrain_patch_list.pop_front()
 		
-		# Rotate the list
-		terrain_patch_list.append(terrain_patch_list.pop_front())
+		# Create a new terrain patch at the end of the chain
+		terrain_counter += 1
+		var terrain_index = (terrain_counter % 8) + 1  # Cycle through terrain types
+		
+		var new_terrain_scene = ModelLoader.load_mesh_only("res://assets/models/terrain_%d" % terrain_index)
+		
+		if new_terrain_scene:
+			# Position new terrain at the end of the chain
+			var z_offset = randf_range(-0.05, 0.05)
+			new_terrain_scene.position = Vector3(0, last_patch.position.y + safe_patch_size, -15.0 + z_offset)
+			
+			# Rotate terrain to be horizontal
+			new_terrain_scene.rotation_degrees = Vector3(-90, 0, 180)
+			
+			# Override materials to remove reflections
+			override_terrain_materials(new_terrain_scene)
+			
+			# Add to scene and list
+			terrain_container.add_child(new_terrain_scene)
+			terrain_patch_list.append(new_terrain_scene)
+		else:
+			print("ERROR: Could not load terrain GLB file: terrain_%d" % terrain_index)
 
 func check_level_end(_music_time: float):
 	"""Check if level should end like original ctask_checkEnd"""
@@ -1234,13 +1284,7 @@ func _input(event):
 		# Mouse movement is handled in handle_mouse_movement() during _process
 		pass
 	
-	# Handle mouse clicks for ring hitting
-	elif event is InputEventMouseButton:
-		if event.pressed:
-			match event.button_index:
-				MOUSE_BUTTON_LEFT:
-					set_input_method(InputMethod.MOUSE)
-					check_centralized_button_press(InputMethod.MOUSE, event.position)  # Mouse click works for all ring types
+	# Mouse clicks disabled for increased difficulty - only keyboard and gamepad allowed
 	
 	# Handle gamepad button presses for ring hitting
 	elif event is InputEventJoypadButton:

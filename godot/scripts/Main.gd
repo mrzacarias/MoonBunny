@@ -90,7 +90,7 @@ func _ready():
 	
 	# For HTML exports, just use a simple timer-based splash screen
 	# The SplashScreen script often doesn't work properly in HTML exports
-	get_tree().create_timer(3.0).timeout.connect(func():
+	get_tree().create_timer(3.5).timeout.connect(func():
 		_on_splash_finished()
 	)
 	

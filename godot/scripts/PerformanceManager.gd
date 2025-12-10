@@ -23,11 +23,11 @@ var check_interval: float = 2.0  # Check every 2 seconds
 var last_check_time: float = 0.0
 
 func _ready():
-	# Start with medium quality for web to be safe
+	# Start with low quality for web to ensure smooth performance
 	if OS.get_name() == "Web":
-		set_quality_level(QualityLevel.MEDIUM)
+		set_quality_level(QualityLevel.LOW)
 	else:
-		set_quality_level(QualityLevel.HIGH)
+		set_quality_level(QualityLevel.MEDIUM)
 
 func _process(delta):
 	# Collect frame time samples

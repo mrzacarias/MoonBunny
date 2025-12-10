@@ -104,21 +104,24 @@ class RingHitParticles extends GPUParticles3D:
 		if OS.get_name() == "Web":
 			brightness_multiplier = 0.7  # 30% darker for HTML
 		
+		# Reduce particle counts for web performance
+		var web_multiplier = 0.3 if OS.get_name() == "Web" else 1.0
+		
 		match judgement:
 			"PERFECT":
-				amount = 100
+				amount = int(100 * web_multiplier)
 				(process_material as ParticleProcessMaterial).color = Color(1.0, 0.8, 0.0, 0.9) * brightness_multiplier  # Gold
 			"GOOD":
-				amount = 75
+				amount = int(75 * web_multiplier)
 				(process_material as ParticleProcessMaterial).color = Color(0.0, 1.0, 0.0, 0.8) * brightness_multiplier  # Green
 			"OK":
-				amount = 50
+				amount = int(50 * web_multiplier)
 				(process_material as ParticleProcessMaterial).color = Color(1.0, 1.0, 0.0, 0.7) * brightness_multiplier  # Yellow
 			"BAD":
-				amount = 25
+				amount = int(25 * web_multiplier)
 				(process_material as ParticleProcessMaterial).color = Color(1.0, 0.5, 0.0, 0.6) * brightness_multiplier  # Orange
 			_:
-				amount = 10
+				amount = int(10 * web_multiplier)
 				(process_material as ParticleProcessMaterial).color = Color(0.5, 0.5, 0.5, 0.5) * brightness_multiplier  # Gray
 		
 		# Start emission
