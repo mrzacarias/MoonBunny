@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bfgxj8xyqhqhk"]
+[gd_scene load_steps=10 format=3 uid="uid://bfgxj8xyqhqhk"]
 
 [ext_resource type="Script" uid="uid://d3rqp5yw8yxgt" path="res://scripts/Main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://cbs2xvasrroya" path="res://scenes/SplashScreen.tscn" id="2_splashscreen"]
@@ -6,7 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/LevelSelect.tscn" id="4_levelselect"]
 [ext_resource type="PackedScene" path="res://scenes/GameplayUI.tscn" id="5_gameplayui"]
 [ext_resource type="PackedScene" uid="uid://bk8xj9xyqhqhl" path="res://scenes/ResultScreen.tscn" id="6_resultscreen"]
-[ext_resource type="AudioStream" uid="uid://b15tipwcfo8nt" path="res://assets/sounds/always.ogg" id="7_menu_music"]
+[ext_resource type="PackedScene" uid="uid://c8xj9xyqhqhi" path="res://scenes/HowToPlayScreen.tscn" id="7_howtoplay"]
+[ext_resource type="AudioStream" uid="uid://b15tipwcfo8nt" path="res://assets/sounds/always.ogg" id="8_menu_music"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -55,6 +56,10 @@ layout_mode = 1
 visible = false
 layout_mode = 1
 
+[node name="HowToPlayScreen" parent="UI" instance=ExtResource("7_howtoplay")]
+visible = false
+layout_mode = 1
+
 [node name="BlackScreenOverlay" type="ColorRect" parent="UI"]
 z_index = 100
 layout_mode = 1
@@ -69,4 +74,4 @@ visible = false
 [node name="Level" type="Node3D" parent="."]
 
 [node name="MenuMusic" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("7_menu_music")
+stream = ExtResource("8_menu_music")

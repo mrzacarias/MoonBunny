@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://c8xj9xyqhqhi"]
+
+[ext_resource type="Script" path="res://scripts/HowToPlayScreen.gd" id="1_howtoplay"]
+[ext_resource type="Texture2D" uid="uid://tqmyf4semxgt" path="res://assets/textures/tela_gamepad.png" id="2_gamepad"]
+[ext_resource type="Texture2D" uid="uid://dgwhda6kh12wa" path="res://assets/textures/tela_keyboard_mouse.png" id="3_keyboard_mouse"]
+[ext_resource type="Texture2D" uid="uid://negthgchqq7d" path="res://assets/textures/tela_touch.png" id="4_touch"]
+
+[node name="HowToPlayScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_howtoplay")
+
+[node name="ControlImage" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_gamepad")
+expand_mode = 1
+stretch_mode = 6

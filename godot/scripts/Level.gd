@@ -441,20 +441,45 @@ func modify_mesh_materials(mesh_instance: MeshInstance3D):
 			original_material = mesh_instance.mesh.surface_get_material(surface_idx)
 		
 		if original_material and original_material is StandardMaterial3D:
-			# Create a NEW material to avoid modifying shared resources
-			var new_material = StandardMaterial3D.new()
 			var original_std = original_material as StandardMaterial3D
 			
-			# Copy essential properties from original
+			# Only modify materials that need reflection removal
+			# If the material already has low metallic and high roughness, preserve it as-is
+			if original_std.metallic <= 0.1 and original_std.roughness >= 0.9:
+				# Material already has good properties, just ensure depth testing
+				var new_material = original_std.duplicate()
+				new_material.no_depth_test = false
+				new_material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
+				mesh_instance.set_surface_override_material(surface_idx, new_material)
+				continue
+			
+			# Create a NEW material to avoid modifying shared resources
+			var new_material = StandardMaterial3D.new()
+			
+			# Copy ALL properties from original to preserve embedded GLB materials
 			new_material.albedo_texture = original_std.albedo_texture
 			new_material.albedo_color = original_std.albedo_color
 			new_material.normal_texture = original_std.normal_texture
 			new_material.roughness_texture = original_std.roughness_texture
 			new_material.metallic_texture = original_std.metallic_texture
+			new_material.emission_texture = original_std.emission_texture
+			new_material.emission_enabled = original_std.emission_enabled
+			new_material.emission = original_std.emission
+			new_material.uv1_scale = original_std.uv1_scale
+			new_material.uv1_offset = original_std.uv1_offset
+			new_material.texture_filter = original_std.texture_filter
+			new_material.transparency = original_std.transparency
+			new_material.blend_mode = original_std.blend_mode
+			new_material.cull_mode = original_std.cull_mode
+			new_material.shading_mode = original_std.shading_mode
 			
-			# Set properties to remove reflections
+			# Only modify reflection properties, preserve everything else
 			new_material.roughness = 1.0  # Maximum roughness for no reflections
 			new_material.metallic = 0.0   # No metallic properties
+			
+			# Ensure proper depth testing for terrain materials
+			new_material.no_depth_test = false
+			new_material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
 			
 			# Apply HTML brightness adjustment ONLY ONCE to the new material
 			if OS.get_name() == "Web":
@@ -466,9 +491,6 @@ func modify_mesh_materials(mesh_instance: MeshInstance3D):
 					base_color.b * 0.9,
 					base_color.a
 				)
-			
-			# Note: Depth bias properties were removed in Godot 4.x
-			# Z-fighting prevention is now handled by proper mesh positioning
 			
 			# Apply the new material as an override
 			mesh_instance.set_surface_override_material(surface_idx, new_material)
@@ -1348,7 +1370,7 @@ func check_centralized_button_press(input_method: InputMethod, screen_position: 
 	if not ring["cleared"]:
 		var judgement = ""
 		
-		# Timing windows matching original game exactly with 50% bonus only for touch hits
+		# Timing windows matching original game exactly - no base bonus for touch hits
 		var base_score = 0
 		if time_diff <= 0.08:
 			judgement = "PERFECT"
@@ -1369,10 +1391,8 @@ func check_centralized_button_press(input_method: InputMethod, screen_position: 
 		else:
 			return  # Too far off
 		
-		# Apply 50% bonus only for touch hits (touch devices don't have multiple buttons)
+		# No base bonus for touch hits - bonus only for inner circle hits
 		var final_score = base_score
-		if input_method == InputMethod.TOUCH:
-			final_score = int(base_score * 1.5)  # 50% bonus for touch
 		
 		# Check for proximity bonus for touch/mouse hits (50% extra if close to ring center)
 		# Always check proximity to update ring color, but only apply bonus for touch/mouse
@@ -1465,7 +1485,6 @@ func update_inner_ring_color(ring: Dictionary, _is_within_proximity: bool):
 	# Enable proper depth testing so it occludes correctly with bunny and other objects
 	material.no_depth_test = false
 	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
-	material.depth_test_enabled = true
 	
 	# Note: Depth bias properties were removed in Godot 4.x
 	# Natural z-depth handles occlusion properly

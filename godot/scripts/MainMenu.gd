@@ -143,20 +143,25 @@ func _input(event):
 	if should_process:
 		# Navigation (up/down)
 		if event.is_action_pressed("ui_up"):
+			get_main().set_last_input_method(0 if event is InputEventKey else 2)
 			change_selection(-1)
 		elif event.is_action_pressed("ui_down"):
+			get_main().set_last_input_method(0 if event is InputEventKey else 2)
 			change_selection(1)
 		
 		# Selection/Accept
 		elif event.is_action_pressed("ui_accept") or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_A):
+			get_main().set_last_input_method(0 if event is InputEventKey else 2)
 			select_current_option()
 		
 		# Cancel/Back
 		elif event.is_action_pressed("ui_cancel") or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_START):
+			get_main().set_last_input_method(0 if event is InputEventKey else 2)
 			_on_exit_pressed()
 		
 		# Mouse/Touch clicks
 		elif (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or event is InputEventScreenTouch:
+			get_main().set_last_input_method(1 if event is InputEventMouseButton else 3)
 			if event is InputEventScreenTouch:
 				# Touch debouncing
 				var current_time = Time.get_time_dict_from_system()
@@ -171,6 +176,7 @@ func _input(event):
 	
 	# Mouse hover (not pressed)
 	elif event is InputEventMouseMotion:
+		get_main().set_last_input_method(1)
 		_handle_hover(event.position)
 
 func change_selection(direction: int):
@@ -259,5 +265,9 @@ func _handle_hover(mouse_position: Vector2):
 				current_selection = i
 				update_selection()
 			return
+
+func get_main():
+	"""Get reference to Main node"""
+	return get_node("/root/Main")
 
 # State handling is now done by Main.gd

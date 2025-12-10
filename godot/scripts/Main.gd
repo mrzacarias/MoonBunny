@@ -9,8 +9,21 @@ enum GameState {
 	LEVEL_SELECT,
 	LEVEL,
 	TRAINING,
+	HOW_TO_PLAY,
 	RESULT
 }
+
+# Global input method tracking
+enum GlobalInputMethod {
+	KEYBOARD,
+	MOUSE,
+	GAMEPAD,
+	TOUCH
+}
+var last_input_method: GlobalInputMethod = GlobalInputMethod.KEYBOARD
+
+# Splash screen fallback timer tracking
+var splash_fallback_timer: SceneTreeTimer = null
 
 # UI References
 @onready var splash_screen = $UI/SplashScreen
@@ -18,6 +31,7 @@ enum GameState {
 @onready var level_select = $UI/LevelSelect
 @onready var gameplay_ui = $UI/GameplayUI
 @onready var result_screen = $UI/ResultScreen
+@onready var how_to_play_screen = $UI/HowToPlayScreen
 @onready var background_color = $BackgroundColor
 @onready var black_screen_overlay = $UI/BlackScreenOverlay
 
@@ -57,6 +71,8 @@ func _ready():
 		gameplay_ui = get_node_or_null("UI/GameplayUI")
 	if not result_screen:
 		result_screen = get_node_or_null("UI/ResultScreen")
+	if not how_to_play_screen:
+		how_to_play_screen = get_node_or_null("UI/HowToPlayScreen")
 	if not background_color:
 		background_color = get_node_or_null("BackgroundColor")
 	if not black_screen_overlay:
@@ -88,11 +104,20 @@ func _ready():
 	if result_screen and result_screen.has_signal("return_to_menu"):
 		result_screen.return_to_menu.connect(_on_result_screen_return_to_menu)
 	
-	# For HTML exports, just use a simple timer-based splash screen
+	# Connect HowToPlayScreen signal
+	if how_to_play_screen and how_to_play_screen.has_signal("ready_to_continue"):
+		how_to_play_screen.ready_to_continue.connect(_on_how_to_play_ready_to_continue)
+	
+	# For HTML exports, use a timer-based splash screen as fallback
 	# The SplashScreen script often doesn't work properly in HTML exports
-	get_tree().create_timer(3.5).timeout.connect(func():
-		_on_splash_finished()
-	)
+	if splash_screen and splash_screen.has_signal("splash_finished"):
+		splash_screen.splash_finished.connect(_on_splash_finished)
+	else:
+		# Fallback timer for HTML exports
+		splash_fallback_timer = get_tree().create_timer(3.5)
+		splash_fallback_timer.timeout.connect(func():
+			_on_splash_finished()
+		)
 	
 	# Setup initial state
 	change_state(GameState.SPLASH)
@@ -102,8 +127,8 @@ func _ready():
 func _input(event):
 	"""Handle global input events - simplified to only ESC key"""
 	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
-		# Don't handle ESC in RESULT state - let ResultScreen handle it
-		if current_state != GameState.RESULT:
+		# Only handle ESC for level select and levels (not splash, title, results, or how-to-play)
+		if current_state == GameState.LEVEL_SELECT or current_state == GameState.LEVEL or current_state == GameState.TRAINING:
 			handle_nav_back()
 			get_viewport().set_input_as_handled()
 
@@ -127,6 +152,8 @@ func change_state(new_state: GameState):
 			show_level_select()
 		GameState.LEVEL, GameState.TRAINING:
 			show_gameplay()
+		GameState.HOW_TO_PLAY:
+			show_how_to_play()
 		GameState.RESULT:
 			show_result()
 
@@ -158,6 +185,8 @@ func hide_all_ui():
 		gameplay_ui.visible = false
 	if result_screen:
 		result_screen.visible = false
+	if how_to_play_screen:
+		how_to_play_screen.visible = false
 	if black_screen_overlay:
 		black_screen_overlay.visible = false
 
@@ -196,19 +225,18 @@ func show_title_screen():
 		background_color.visible = true  # Show background during menus
 	start_theme_music()
 	
-	# Add delay to prevent immediate input processing when coming from results
-	if previous_state == GameState.RESULT:
-		# Temporarily disable main menu input using flag
-		if main_menu:
-			main_menu.input_enabled = false
-		get_tree().create_timer(0.5).timeout.connect(func(): 
-			if main_menu and is_instance_valid(main_menu):
-				main_menu.input_enabled = true
-		)
-	else:
-		# Normal case - enable input immediately
-		if main_menu:
+	# Add delay to prevent immediate input processing when coming from any state
+	# This prevents rapid clicking from causing state transition issues
+	if main_menu:
+		main_menu.input_enabled = false
+	
+	# Use a longer delay for better input debouncing
+	# Splash screen needs extra time to prevent startup input issues
+	var delay_time = 0.8 if previous_state == GameState.SPLASH else (0.3 if previous_state == GameState.RESULT else 0.2)
+	get_tree().create_timer(delay_time).timeout.connect(func(): 
+		if main_menu and is_instance_valid(main_menu):
 			main_menu.input_enabled = true
+	)
 
 func show_level_select():
 	"""Show level selection screen"""
@@ -343,15 +371,21 @@ func _on_level_music_started():
 # Menu navigation handlers - these get called by UI screens
 func on_menu_start():
 	"""Handle start button from main menu"""
+	# Disable menu input immediately to prevent double-processing
+	if main_menu:
+		main_menu.input_enabled = false
 	change_state(GameState.LEVEL_SELECT)
 
 func on_menu_training():
 	"""Handle training button from main menu"""
-	# Set training level and start
+	# Disable menu input immediately to prevent double-processing
+	if main_menu:
+		main_menu.input_enabled = false
+	# Set training level and go to how-to-play screen first
 	selected_level = "training"
 	selected_difficulty = "Normal"
 	is_training = true
-	change_state(GameState.TRAINING)
+	change_state(GameState.HOW_TO_PLAY)
 
 
 func on_menu_exit():
@@ -377,9 +411,39 @@ func _on_result_screen_return_to_menu():
 	"""Handle ResultScreen signal to return to main menu"""
 	on_back_to_menu()
 
+func _on_how_to_play_ready_to_continue():
+	"""Handle HowToPlayScreen signal to continue to training"""
+	change_state(GameState.TRAINING)
+
+func show_how_to_play():
+	"""Show how-to-play screen with appropriate control image"""
+	if how_to_play_screen:
+		how_to_play_screen.visible = true
+		how_to_play_screen.show_for_input_method(last_input_method)
+	if background_color:
+		background_color.visible = true  # Show background during how-to-play
+	stop_theme_music()
+
+func set_last_input_method(method: GlobalInputMethod):
+	"""Set the last used input method globally"""
+	last_input_method = method
+
+func get_last_input_method() -> GlobalInputMethod:
+	"""Get the last used input method"""
+	return last_input_method
+
 
 func _on_splash_finished():
 	"""Handle splash screen completion"""
+	# Prevent multiple calls if both timer and signal fire
+	if current_state != GameState.SPLASH:
+		return
+	
+	# Clear the fallback timer reference
+	splash_fallback_timer = null
+	
+	# Clear any pending input events from splash screen
+	Input.flush_buffered_events()
 	change_state(GameState.TITLE)
 
 func show_empty_results():
