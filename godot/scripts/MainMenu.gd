@@ -161,15 +161,21 @@ func _input(event):
 		
 		# Mouse/Touch clicks
 		elif (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or event is InputEventScreenTouch:
-			get_main().set_last_input_method(1 if event is InputEventMouseButton else 3)
 			if event is InputEventScreenTouch:
+				get_main().set_last_input_method(3)
 				# Touch debouncing
 				var current_time = Time.get_time_dict_from_system()
 				var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
 				if current_timestamp - last_touch_time <= TOUCH_DEBOUNCE_TIME:
 					return
 				last_touch_time = current_timestamp
-			
+			elif event is InputEventMouseButton:
+				# In web browsers on mobile, touch is often converted to mouse events
+				# Check if this might be a touch-generated mouse event
+				if DisplayServer.is_touchscreen_available():
+					get_main().set_last_input_method(3)  # Treat as touch on touch devices
+				else:
+					get_main().set_last_input_method(1)  # Treat as mouse on desktop
 			_handle_click(event.position)
 		
 		get_viewport().set_input_as_handled()

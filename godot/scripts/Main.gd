@@ -422,10 +422,70 @@ func show_how_to_play():
 	"""Show how-to-play screen with appropriate control image"""
 	if how_to_play_screen:
 		how_to_play_screen.visible = true
-		how_to_play_screen.show_for_input_method(last_input_method)
+		# Use device detection instead of last input method for more reliable results
+		var input_method = detect_device_input_method()
+		how_to_play_screen.show_for_input_method(input_method)
 	if background_color:
 		background_color.visible = true  # Show background during how-to-play
 	stop_theme_music()
+
+func detect_device_input_method() -> int:
+	"""Detect the most appropriate input method based on device capabilities and last interaction"""
+	print("Device Detection Debug:")
+	print("  OS Name: ", OS.get_name())
+	print("  Screen Size: ", DisplayServer.screen_get_size())
+	print("  Touch Available: ", DisplayServer.is_touchscreen_available())
+	print("  Connected Joypads: ", Input.get_connected_joypads())
+	print("  Is Mobile Device: ", is_mobile_device())
+	print("  Last Input Method: ", last_input_method)
+	
+	# Check if we're on a mobile device first (highest priority)
+	if is_mobile_device():
+		print("  -> Using TOUCH input method (3) - mobile device")
+		return 3  # TOUCH
+	
+	# Check if touch screen is available AND user actually used touch
+	if DisplayServer.is_touchscreen_available() and last_input_method == 3:
+		print("  -> Using TOUCH input method (3) - touch screen used")
+		return 3  # TOUCH
+	
+	# Check if gamepad is connected AND user actually used gamepad
+	if not Input.get_connected_joypads().is_empty() and last_input_method == 2:
+		print("  -> Using GAMEPAD input method (2) - gamepad used")
+		return 2  # GAMEPAD
+	
+	# For desktop devices, use the actual input method that was used
+	if last_input_method == 1:  # MOUSE
+		print("  -> Using MOUSE input method (1) - mouse used")
+		return 1  # MOUSE (will show keyboard/mouse image)
+	elif last_input_method == 0:  # KEYBOARD
+		print("  -> Using KEYBOARD input method (0) - keyboard used")
+		return 0  # KEYBOARD (will show keyboard/mouse image)
+	
+	# Fallback: Default to keyboard/mouse for desktop
+	print("  -> Using KEYBOARD input method (0) - default fallback")
+	return 0  # KEYBOARD
+
+func is_mobile_device() -> bool:
+	"""Detect if we're running on a mobile device"""
+	# Check the OS name
+	var os_name = OS.get_name()
+	if os_name in ["Android", "iOS"]:
+		return true
+	
+	# For web exports, check user agent or screen size
+	if os_name == "Web":
+		# Check if screen is small (typical mobile resolution)
+		var screen_size = DisplayServer.screen_get_size()
+		var is_small_screen = screen_size.x <= 768 or screen_size.y <= 768
+		
+		# Check if touch is available (most reliable for web)
+		var has_touch = DisplayServer.is_touchscreen_available()
+		
+		# Mobile if small screen AND touch available
+		return is_small_screen and has_touch
+	
+	return false
 
 func set_last_input_method(method: GlobalInputMethod):
 	"""Set the last used input method globally"""

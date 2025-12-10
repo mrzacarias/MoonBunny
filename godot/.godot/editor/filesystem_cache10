@@ -128,7 +128,7 @@ tela_touch.png::CompressedTexture2D::921111087384603059::1765340940::1765340976:
 title.png::CompressedTexture2D::5124450680204635180::1764963115::1764997535::1::::<><><>0<>0<>91423be1d8b456c53ac0d56048efd127<>res://.godot/imported/title.png-81e99d3c910542a81dea8430ca7caf86.ctex::
 tromba_logo.png::CompressedTexture2D::3885907854961343992::1764963115::1764997535::1::::<><><>0<>0<>df4774c133616a3ff8d7bb2acffcdb77<>res://.godot/imported/tromba_logo.png-4fc93cafe564d7e9f1ea4343ea76ff7e.ctex::
 ::res://scenes/::1765339895
-GameplayUI.tscn::PackedScene::-1::1765342214::0::1::::<><><>0<>0<><>::uid://p3j7bhealr6m::::res://scripts/GameplayUI.gd
+GameplayUI.tscn::PackedScene::-1::1765342789::0::1::::<><><>0<>0<><>::uid://p3j7bhealr6m::::res://scripts/GameplayUI.gd
 HowToPlayScreen.tscn::PackedScene::209916538575341998::1765340374::0::1::::<><><>0<>0<><>::res://scripts/HowToPlayScreen.gd<>uid://tqmyf4semxgt::::res://assets/textures/tela_gamepad.png<>uid://dgwhda6kh12wa::::res://assets/textures/tela_keyboard_mouse.png<>uid://negthgchqq7d::::res://assets/textures/tela_touch.png
 Level.tscn::PackedScene::-1::1765166360::0::1::::<><><>0<>0<><>::res://scripts/Level.gd
 LevelSelect.tscn::PackedScene::5743915786947335374::1765212917::0::1::::<><><>0<>0<><>::uid://b3reoulg6qs5j::::res://scripts/LevelSelect.gd<>uid://bcurgxptbywii::::res://assets/textures/bg.png<>uid://cbjywjre21yfg::::res://assets/textures/arrow_left.png<>uid://dce8k8truvlss::::res://assets/textures/arrow_right.png<>uid://bq7yrq67xeu18::::res://assets/fonts/HUM521BC.TTF
@@ -147,8 +147,8 @@ Level.gd::GDScript::6440193184237949790::1765342352::0::1::::Level<>Node3D<><>0<
 LevelGUI.gd::GDScript::7795272370005406640::1765235051::0::1::::LevelGUI<>Node<><>0<>0<><>::
 LevelResourceManager.gd::GDScript::4380170203165685084::1765323614::0::1::::<>Node<><>0<>0<><>::
 LevelSelect.gd::GDScript::4387071664237299517::1765341756::0::1::::<>Control<><>0<>0<><>::
-Main.gd::GDScript::9160643967376521803::1765342200::0::1::::<>Control<><>0<>0<><>::
-MainMenu.gd::GDScript::6083866837495262926::1765342712::0::1::::<>Control<><>0<>0<><>::
+Main.gd::GDScript::9160643967376521803::1765343448::0::1::::<>Control<><>0<>0<><>::
+MainMenu.gd::GDScript::6083866837495262926::1765343125::0::1::::<>Control<><>0<>0<><>::
 ModelLoader.gd::GDScript::624462014307205910::1765337207::0::1::::ModelLoader<>RefCounted<><>0<>0<><>::
 ParticleEffects.gd::GDScript::233316274120657950::1765321775::0::1::::ParticleEffects<>Node3D<><>0<>0<><>::
 PerformanceManager.gd::GDScript::4299719862756044491::1765321775::0::1::::<>Node<><>0<>0<><>::
