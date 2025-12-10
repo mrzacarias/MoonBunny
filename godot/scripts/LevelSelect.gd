@@ -122,7 +122,7 @@ func _input(event):
 			_on_play_pressed()
 		
 		# Cancel/Back
-		elif event.is_action_pressed("ui_cancel") or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_B):
+		elif event.is_action_pressed("ui_cancel") or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_START):
 			_on_back_pressed()
 		
 		# Mouse/Touch clicks
