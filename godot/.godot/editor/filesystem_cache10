@@ -138,7 +138,7 @@ BunnyAnimationController.gd::GDScript::4427465334110531366::1765235051::0::1::::
 EarAnimationController.gd::GDScript::6901073026191908541::1765235051::0::1::::EarAnimationController<>Node3D<><>0<>0<><>::
 GameplayUI.gd::GDScript::1111238893543190150::1765235051::0::1::::<>Control<><>0<>0<><>::
 HighScoreManager.gd::GDScript::4121346196102731051::1765242512::0::1::::<>Node<><>0<>0<><>::
-Level.gd::GDScript::6440193184237949790::1765337207::0::1::::Level<>Node3D<><>0<>0<><>::
+Level.gd::GDScript::6440193184237949790::1765337699::0::1::::Level<>Node3D<><>0<>0<><>::
 LevelGUI.gd::GDScript::7795272370005406640::1765235051::0::1::::LevelGUI<>Node<><>0<>0<><>::
 LevelResourceManager.gd::GDScript::4380170203165685084::1765323614::0::1::::<>Node<><>0<>0<><>::
 LevelSelect.gd::GDScript::4387071664237299517::1765336748::0::1::::<>Control<><>0<>0<><>::

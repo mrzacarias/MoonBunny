@@ -1303,9 +1303,13 @@ func check_button_press(button: String):
 		else:
 			return  # Too far off
 		
-		# Apply 50% bonus for using type-specific key
-		var bonus_score = int(base_score * 1.5)
-		score += bonus_score
+		# Check for proximity bonus using inner ring logic
+		var proximity_bonus = check_proximity_bonus(ring, Vector2.ZERO)
+		var final_score = base_score
+		if proximity_bonus:
+			final_score = int(base_score * 1.5)  # 50% bonus for inner ring hit only
+		
+		score += final_score
 		
 		# Check position accuracy - use world coordinates for both
 		var bunny_pos = Vector2(bunny_actor.position.x, bunny_actor.position.z)
