@@ -176,7 +176,10 @@ func _input(event):
 	
 	# Mouse hover (not pressed)
 	elif event is InputEventMouseMotion:
-		get_main().set_last_input_method(1)
+		# Only set mouse input method if we're not on a touch device
+		# Touch devices generate mouse motion events that would override touch input
+		if not DisplayServer.is_touchscreen_available():
+			get_main().set_last_input_method(1)
 		_handle_hover(event.position)
 
 func change_selection(direction: int):

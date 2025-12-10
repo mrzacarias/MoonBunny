@@ -148,7 +148,7 @@ LevelGUI.gd::GDScript::7795272370005406640::1765235051::0::1::::LevelGUI<>Node<>
 LevelResourceManager.gd::GDScript::4380170203165685084::1765323614::0::1::::<>Node<><>0<>0<><>::
 LevelSelect.gd::GDScript::4387071664237299517::1765341756::0::1::::<>Control<><>0<>0<><>::
 Main.gd::GDScript::9160643967376521803::1765342200::0::1::::<>Control<><>0<>0<><>::
-MainMenu.gd::GDScript::6083866837495262926::1765339980::0::1::::<>Control<><>0<>0<><>::
+MainMenu.gd::GDScript::6083866837495262926::1765342712::0::1::::<>Control<><>0<>0<><>::
 ModelLoader.gd::GDScript::624462014307205910::1765337207::0::1::::ModelLoader<>RefCounted<><>0<>0<><>::
 ParticleEffects.gd::GDScript::233316274120657950::1765321775::0::1::::ParticleEffects<>Node3D<><>0<>0<><>::
 PerformanceManager.gd::GDScript::4299719862756044491::1765321775::0::1::::<>Node<><>0<>0<><>::
