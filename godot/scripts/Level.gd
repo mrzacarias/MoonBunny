@@ -467,9 +467,8 @@ func modify_mesh_materials(mesh_instance: MeshInstance3D):
 					base_color.a
 				)
 			
-			# Add depth bias to prevent z-fighting between terrain patches
-			new_material.depth_offset_enabled = true
-			new_material.depth_offset_bias = randf_range(-0.001, 0.001)  # Small random depth bias
+			# Note: Depth bias properties were removed in Godot 4.x
+			# Z-fighting prevention is now handled by proper mesh positioning
 			
 			# Apply the new material as an override
 			mesh_instance.set_surface_override_material(surface_idx, new_material)
@@ -657,7 +656,7 @@ func setup_rings():
 		var main_ring_color = ring_material.albedo_color
 		debug_material.albedo_color = Color(main_ring_color.r, main_ring_color.g, main_ring_color.b, 0.4)
 		debug_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		debug_material.flags_unshaded = true
+		debug_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		debug_material.no_depth_test = false  # Enable depth testing for proper occlusion
 		
 		inner_circle.material_override = debug_material
@@ -1080,7 +1079,7 @@ func check_next_ring(music_time: float):
 	
 	# Apply timing offset for hit detection synchronization
 	var adjusted_music_time = music_time + timing_offset
-	var time_diff = abs(ring["time"] - adjusted_music_time)
+	var _time_diff = abs(ring["time"] - adjusted_music_time)
 	
 	# Check if ring should be automatically hit when player passes through it
 	# ONLY when using touch controls AND when the ring timing is close to current time
@@ -1203,81 +1202,20 @@ func time_to_position(time: float) -> float:
 func _input(event):
 	"""Handle input events - keyboard, mouse, touch, and gamepad"""
 	if event is InputEventKey:
-		var pressed = event.pressed
-		
-		match event.keycode:
-			# ESC key to end level early (like original)
-			KEY_ESCAPE:
-				if pressed:
-					end_level()
-			
-			# Movement controls - use arrow keys like original
-			KEY_LEFT:
-				button_map["left"] = pressed
-				if pressed: set_input_method(InputMethod.KEYBOARD)
-			KEY_RIGHT:
-				button_map["right"] = pressed
-				if pressed: set_input_method(InputMethod.KEYBOARD)
-			KEY_UP:
-				button_map["up"] = pressed
-				if pressed: set_input_method(InputMethod.KEYBOARD)
-			KEY_DOWN:
-				button_map["down"] = pressed
-				if pressed: set_input_method(InputMethod.KEYBOARD)
-			
-			# Ring hitting controls - WASD like original with type-specific confirmation
-			KEY_S:
-				if pressed: 
-					set_input_method(InputMethod.KEYBOARD)
-					check_button_press("A")  # S = A button (Ring type A)
-			KEY_A:
-				if pressed: 
-					set_input_method(InputMethod.KEYBOARD)
-					check_button_press("C")  # A = C button (Ring type C)
-			KEY_D:
-				if pressed: 
-					set_input_method(InputMethod.KEYBOARD)
-					check_button_press("B")  # D = B button (Ring type B)
-			KEY_W:
-				if pressed: 
-					set_input_method(InputMethod.KEYBOARD)
-					check_button_press("D")  # W = D button (Ring type D)
-			
-			# Centralized hit button - spacebar for keyboard (works for all ring types)
-			KEY_SPACE:
-				if pressed: 
-					set_input_method(InputMethod.KEYBOARD)
-					check_centralized_button_press(InputMethod.KEYBOARD, Vector2.ZERO)
-			
-			# Test mode key for ear animations
-			KEY_T:
-				if pressed: enable_ear_test_mode()
+		if event.pressed:
+			_handle_keyboard_input(event.keycode)
+		else:
+			_handle_keyboard_release(event.keycode)
 	
 	# Handle touch screen input
 	elif event is InputEventScreenTouch:
 		if event.pressed:
-			# Touch start - record position for movement
-			set_input_method(InputMethod.TOUCH)
-			touch_start_position = event.position
-			is_dragging = false
-			# Handle initial touch position for movement
-			handle_touch_at_position(event.position)
+			_handle_touch_start(event.position)
 		else:
-			# Touch release - no longer needed for ring hitting since rings auto-hit
-			is_dragging = false
+			_handle_touch_end()
 	
 	elif event is InputEventScreenDrag:
-		# Touch drag - handle movement only
-		set_input_method(InputMethod.TOUCH)
-		
-		# Check if we've moved enough to consider this a drag
-		var drag_distance = event.position.distance_to(touch_start_position)
-		if drag_distance > DRAG_THRESHOLD:
-			is_dragging = true
-		
-		# Only handle movement if we're actually dragging (not just small movements)
-		if is_dragging:
-			handle_touch_at_position(event.position)
+		_handle_touch_drag(event.position)
 	
 	# Handle mouse movement (when mouse moves)
 	elif event is InputEventMouseMotion:
@@ -1289,16 +1227,7 @@ func _input(event):
 	# Handle gamepad button presses for ring hitting
 	elif event is InputEventJoypadButton:
 		if event.pressed:
-			set_input_method(InputMethod.GAMEPAD)
-			match event.button_index:
-				JOY_BUTTON_A:
-					check_button_press("A")  # A button = Ring type A
-				JOY_BUTTON_X:
-					check_button_press("B")  # X button = Ring type B
-				JOY_BUTTON_B:
-					check_button_press("C")  # B button = Ring type C
-				JOY_BUTTON_Y:
-					check_button_press("D")  # Y button = Ring type D
+			_handle_gamepad_input(event.button_index)
 
 func handle_touch_at_position(touch_pos: Vector2):
 	"""Handle touch input at given screen position with precise coordinate mapping"""
@@ -1507,7 +1436,7 @@ func check_proximity_bonus(ring: Dictionary, click_screen_position: Vector2 = Ve
 	
 	return is_within_inner_ring
 
-func update_inner_ring_color(ring: Dictionary, is_within_proximity: bool):
+func update_inner_ring_color(ring: Dictionary, _is_within_proximity: bool):
 	"""Update the inner ring color to match main ring color with 40% transparency"""
 	var debug_circle = ring.get("debug_circle")
 	if not debug_circle:
@@ -1527,16 +1456,15 @@ func update_inner_ring_color(ring: Dictionary, is_within_proximity: bool):
 	# Set up proper transparency and depth testing like main rings
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
-	material.flags_unshaded = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	
 	# Enable proper depth testing so it occludes correctly with bunny and other objects
 	material.no_depth_test = false
 	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
 	material.depth_test_enabled = true
 	
-	# Remove depth offset - let natural z-depth handle occlusion like main rings
-	material.depth_offset_enabled = false
-	material.depth_offset_bias = 0.0
+	# Note: Depth bias properties were removed in Godot 4.x
+	# Natural z-depth handles occlusion properly
 	
 	debug_circle.material_override = material
 
@@ -1666,3 +1594,94 @@ func enable_ear_test_mode():
 	var ear_controller = bunny_actor.get_meta("ear_controller", null) if bunny_actor else null
 	if ear_controller and ear_controller.has_method("enable_test_mode"):
 		ear_controller.enable_test_mode()
+
+func _handle_keyboard_input(keycode: int):
+	"""Handle keyboard key presses"""
+	set_input_method(InputMethod.KEYBOARD)
+	
+	match keycode:
+		# ESC key to end level early
+		KEY_ESCAPE:
+			end_level()
+		
+		# Movement controls - arrow keys
+		KEY_LEFT:
+			button_map["left"] = true
+		KEY_RIGHT:
+			button_map["right"] = true
+		KEY_UP:
+			button_map["up"] = true
+		KEY_DOWN:
+			button_map["down"] = true
+		
+		# Ring hitting controls - WASD
+		KEY_S:
+			check_button_press("A")  # S = A button (Ring type A)
+		KEY_A:
+			check_button_press("C")  # A = C button (Ring type C)
+		KEY_D:
+			check_button_press("B")  # D = B button (Ring type B)
+		KEY_W:
+			check_button_press("D")  # W = D button (Ring type D)
+		
+		# Centralized hit button - spacebar
+		KEY_SPACE:
+			check_centralized_button_press(InputMethod.KEYBOARD, Vector2.ZERO)
+		
+		# Test mode key
+		KEY_T:
+			enable_ear_test_mode()
+
+func _handle_keyboard_release(keycode: int):
+	"""Handle keyboard key releases"""
+	match keycode:
+		KEY_LEFT:
+			button_map["left"] = false
+		KEY_RIGHT:
+			button_map["right"] = false
+		KEY_UP:
+			button_map["up"] = false
+		KEY_DOWN:
+			button_map["down"] = false
+
+func _handle_gamepad_input(button_index: int):
+	"""Handle gamepad button presses"""
+	set_input_method(InputMethod.GAMEPAD)
+	
+	match button_index:
+		JOY_BUTTON_A:
+			check_button_press("A")  # A button = Ring type A
+		JOY_BUTTON_X:
+			check_button_press("B")  # X button = Ring type B
+		JOY_BUTTON_B:
+			check_button_press("C")  # B button = Ring type C
+		JOY_BUTTON_Y:
+			check_button_press("D")  # Y button = Ring type D
+		JOY_BUTTON_RIGHT_SHOULDER:
+			check_centralized_button_press(InputMethod.GAMEPAD, Vector2.ZERO)
+		JOY_BUTTON_START:
+			end_level()
+
+func _handle_touch_start(touch_position: Vector2):
+	"""Handle touch start"""
+	set_input_method(InputMethod.TOUCH)
+	touch_start_position = touch_position
+	is_dragging = false
+	handle_touch_at_position(touch_position)
+
+func _handle_touch_end():
+	"""Handle touch end"""
+	is_dragging = false
+
+func _handle_touch_drag(drag_position: Vector2):
+	"""Handle touch drag"""
+	set_input_method(InputMethod.TOUCH)
+	
+	# Check if we've moved enough to consider this a drag
+	var drag_distance = drag_position.distance_to(touch_start_position)
+	if drag_distance > DRAG_THRESHOLD:
+		is_dragging = true
+	
+	# Only handle movement if we're actually dragging
+	if is_dragging:
+		handle_touch_at_position(drag_position)

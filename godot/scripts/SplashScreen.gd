@@ -100,24 +100,6 @@ func _on_timer_timeout():
 	"""Fallback timer in case tween doesn't work"""
 	splash_finished.emit()
 
-func _input(event):
-	"""Allow skipping splash with specific keys only"""
-	if not visible:
-		return  # Don't handle input if splash screen is not visible
-		
-	if event is InputEventKey and event.pressed:
-		# Only allow skipping with Enter, Space, or Escape
-		if event.keycode in [KEY_ENTER, KEY_SPACE, KEY_ESCAPE]:
-			skip_splash()
-	elif event is InputEventJoypadButton and event.pressed:
-		# Allow any joypad button to skip
-		skip_splash()
-	elif event is InputEventMouseButton and event.pressed:
-		# Allow mouse clicks to skip
-		skip_splash()
-	elif event is InputEventScreenTouch and event.pressed:
-		# Allow touch to skip
-		skip_splash()
 
 func skip_splash():
 	"""Skip splash screen and stop all audio"""

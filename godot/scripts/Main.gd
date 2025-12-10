@@ -97,22 +97,15 @@ func _ready():
 	# Setup initial state
 	change_state(GameState.SPLASH)
 	
-	# Setup input handling
-	setup_input()
-
-func setup_input():
-	"""Setup global input handling like original Controller class"""
-	# Input will be handled by individual UI screens and forwarded to state machine
-	pass
+	# Input handling is now managed by individual UI screens
 
 func _input(event):
-	"""Handle global input events"""
-	if event is InputEventKey and event.pressed:
-		match event.keycode:
-			KEY_ESCAPE:
-				# Don't handle ESC in RESULT state - let ResultScreen handle it
-				if current_state != GameState.RESULT:
-					handle_nav_back()
+	"""Handle global input events - simplified to only ESC key"""
+	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
+		# Don't handle ESC in RESULT state - let ResultScreen handle it
+		if current_state != GameState.RESULT:
+			handle_nav_back()
+			get_viewport().set_input_as_handled()
 
 func change_state(new_state: GameState):
 	"""Change game state and update UI"""

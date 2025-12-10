@@ -4,7 +4,7 @@ class_name ModelLoader
 # Enhanced model loader that applies proper materials to .obj models
 # This compensates for the texture loss during .egg to .obj conversion
 
-static func load_model_with_materials(model_path: String, texture_path: String = "") -> Node3D:
+static func load_model_with_materials(model_path: String, _texture_path: String = "") -> Node3D:
 	"""Load a GLB model with embedded materials and animations"""
 	
 	# Ensure .glb extension
@@ -91,8 +91,8 @@ static func create_material_with_texture(texture_path: String) -> StandardMateri
 	material.roughness = 1.0  # Maximum roughness to eliminate reflections
 	material.metallic = 0.0   # No metallic properties
 	# Note: 'specular' property was removed in Godot 4.x, now controlled by roughness and metallic
-	material.flags_transparent = false
-	material.flags_albedo_tex_force_srgb = true
+	material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+	material.albedo_texture_force_srgb = true
 	# Additional settings to reduce reflections
 	# Note: specular property removed in Godot 4.x - controlled by roughness and metallic
 	# Use normal albedo color without web-specific adjustments
@@ -142,7 +142,7 @@ static func create_ring_material(button: String) -> StandardMaterial3D:
 	material.roughness = 0.1
 	material.metallic = 0.8
 	# Note: specular property was removed in Godot 4.x
-	material.flags_transparent = false
+	material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
 	
 	return material
 
@@ -152,12 +152,10 @@ static func create_skybox_material() -> StandardMaterial3D:
 	
 	# Skybox material settings for Godot 4 - optimized for brightness
 	material.cull_mode = BaseMaterial3D.CULL_FRONT  # Render inside
-	material.flags_unshaded = true  # This is key - unshaded means no lighting affects it
-	material.flags_do_not_receive_shadows = true
-	material.flags_disable_ambient_light = true  # This is correct for skybox
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED  # This is key - unshaded means no lighting affects it
 	material.no_depth_test = true
 	material.vertex_color_use_as_albedo = false
-	material.flags_albedo_tex_force_srgb = true  # Force sRGB for proper color space in web
+	material.albedo_texture_force_srgb = true  # Force sRGB for proper color space in web
 	
 	# Try the better skybox texture first
 	var sky_texture_paths = [
@@ -219,7 +217,7 @@ static func get_terrain_texture_for_type(terrain_type: int) -> String:
 	
 	return terrain_textures.get(terrain_type, "res://assets/models/grass.jpg")
 
-static func load_mesh_only(model_path: String, texture_path: String = "") -> Node3D:
+static func load_mesh_only(model_path: String, _texture_path: String = "") -> Node3D:
 	"""Load a GLB model and return the complete scene (for skybox, terrain, etc.)
 	This preserves all meshes in GLB files instead of just the first one."""
 	

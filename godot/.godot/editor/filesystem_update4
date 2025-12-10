@@ -1,0 +1,5 @@
+res://scripts/LevelSelect.gd
+res://scripts/MainMenu.gd
+res://scripts/ResultScreen.gd
+res://scripts/Level.gd
+res://scripts/ModelLoader.gd

@@ -124,40 +124,54 @@ func _input(event):
 	if not visible or not input_enabled:
 		return
 	
-	# Input is now controlled by visibility and input_enabled flag
-		
-	if event.is_action_pressed("ui_up"):
-		change_selection(-1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_down"):
-		change_selection(1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_accept"):
-		select_current_option()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel"):
-		_on_exit_pressed()
-		get_viewport().set_input_as_handled()
+	# Unified input handling - all input types in one place
+	# Only process events that have a pressed state or are specific event types
+	var should_process = false
 	
-	# Handle mouse clicks on menu items
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		handle_mouse_click(event.position)
-		get_viewport().set_input_as_handled()
-	
-	# Handle touch input on menu items with debouncing
+	# Check if event has pressed property and is pressed
+	if event.has_method("is_pressed") and event.is_pressed():
+		should_process = true
+	elif event is InputEventKey and event.pressed:
+		should_process = true
+	elif event is InputEventJoypadButton and event.pressed:
+		should_process = true
+	elif event is InputEventMouseButton and event.pressed:
+		should_process = true
 	elif event is InputEventScreenTouch and event.pressed:
-		var current_time = Time.get_time_dict_from_system()
-		var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
+		should_process = true
+	
+	if should_process:
+		# Navigation (up/down)
+		if event.is_action_pressed("ui_up"):
+			change_selection(-1)
+		elif event.is_action_pressed("ui_down"):
+			change_selection(1)
 		
-		# Debounce touch input to prevent double-touches
-		if current_timestamp - last_touch_time > TOUCH_DEBOUNCE_TIME:
-			last_touch_time = current_timestamp
-			handle_mouse_click(event.position)  # Same logic as mouse
+		# Selection/Accept
+		elif event.is_action_pressed("ui_accept") or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_A):
+			select_current_option()
+		
+		# Cancel/Back
+		elif event.is_action_pressed("ui_cancel") or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_START):
+			_on_exit_pressed()
+		
+		# Mouse/Touch clicks
+		elif (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or event is InputEventScreenTouch:
+			if event is InputEventScreenTouch:
+				# Touch debouncing
+				var current_time = Time.get_time_dict_from_system()
+				var current_timestamp = current_time.hour * 3600 + current_time.minute * 60 + current_time.second + current_time.millisecond / 1000.0
+				if current_timestamp - last_touch_time <= TOUCH_DEBOUNCE_TIME:
+					return
+				last_touch_time = current_timestamp
+			
+			_handle_click(event.position)
+		
 		get_viewport().set_input_as_handled()
 	
-	# Handle mouse hover for menu selection
+	# Mouse hover (not pressed)
 	elif event is InputEventMouseMotion:
-		handle_mouse_hover(event.position)
+		_handle_hover(event.position)
 
 func change_selection(direction: int):
 	# Play menu sound
@@ -222,7 +236,7 @@ func _on_exit_pressed():
 	get_viewport().set_input_as_handled()
 	exit_pressed.emit()
 
-func handle_mouse_click(click_position: Vector2):
+func _handle_click(click_position: Vector2):
 	"""Handle mouse/touch clicks on menu items"""
 	for i in range(menu_items.size()):
 		var label = menu_items[i]
@@ -234,7 +248,7 @@ func handle_mouse_click(click_position: Vector2):
 			select_current_option()
 			return
 
-func handle_mouse_hover(mouse_position: Vector2):
+func _handle_hover(mouse_position: Vector2):
 	"""Handle mouse hover to change selection"""
 	for i in range(menu_items.size()):
 		var label = menu_items[i]

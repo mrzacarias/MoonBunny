@@ -25,25 +25,41 @@ func _ready():
 	set_process_input(false)
 
 func _input(event):
-	"""Handle input to continue like original"""
+	"""Unified input handling - all input types in one place"""
 	if not visible:
 		return
 	
+	# Handle all input types that should continue
+	# Only process events that have a pressed state
+	var should_process = false
 	if event is InputEventKey and event.pressed:
-		match event.keycode:
-			KEY_SPACE, KEY_ENTER, KEY_ESCAPE:
-				_handle_continue_input()
-	
-	# Handle mouse clicks
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_handle_continue_input()
-	
-	# Handle touch input
+		should_process = true
+	elif event is InputEventJoypadButton and event.pressed:
+		should_process = true
+	elif event is InputEventMouseButton and event.pressed:
+		should_process = true
 	elif event is InputEventScreenTouch and event.pressed:
-		_handle_continue_input()
+		should_process = true
+	
+	if should_process:
+		var should_continue = false
+		
+		# Keyboard input
+		if event is InputEventKey:
+			should_continue = event.keycode in [KEY_SPACE, KEY_ENTER, KEY_ESCAPE]
+		
+		# Mouse/Touch/Gamepad input
+		elif (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or \
+			 event is InputEventScreenTouch or \
+			 (event is InputEventJoypadButton and event.button_index in [JOY_BUTTON_A, JOY_BUTTON_START]):
+			should_continue = true
+		
+		if should_continue:
+			_continue_to_menu()
+			get_viewport().set_input_as_handled()
 
-func _handle_continue_input():
-	"""Handle continue input from keyboard, mouse, or touch"""
+func _continue_to_menu():
+	"""Handle continue input from any source"""
 	# Disable input processing immediately to prevent double-processing
 	set_process_input(false)
 	# Emit signal to return to menu
