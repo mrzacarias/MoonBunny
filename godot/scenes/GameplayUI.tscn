@@ -49,11 +49,11 @@ vertical_alignment = 1
 
 [node name="EndLevelButton" type="Button" parent="."]
 layout_mode = 0
-anchor_left = 0.3
+anchor_left = 0.4
 anchor_top = 0.0
-anchor_right = 0.7
-anchor_bottom = 0.1
-theme_override_font_sizes/font_size = 32
+anchor_right = 0.6
+anchor_bottom = 0.05
+theme_override_font_sizes/font_size = 24
 text = "End Level"
 visible = false
 
