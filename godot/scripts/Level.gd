@@ -447,10 +447,10 @@ func modify_mesh_materials(mesh_instance: MeshInstance3D):
 			# If the material already has low metallic and high roughness, preserve it as-is
 			if original_std.metallic <= 0.1 and original_std.roughness >= 0.9:
 				# Material already has good properties, just ensure depth testing
-				var new_material = original_std.duplicate()
-				new_material.no_depth_test = false
-				new_material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
-				mesh_instance.set_surface_override_material(surface_idx, new_material)
+				var preserved_material = original_std.duplicate()
+				preserved_material.no_depth_test = false
+				preserved_material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
+				mesh_instance.set_surface_override_material(surface_idx, preserved_material)
 				continue
 			
 			# Create a NEW material to avoid modifying shared resources
@@ -1538,6 +1538,43 @@ func set_input_method(method: InputMethod, bypass_lock: bool = false):
 			InputMethod.TOUCH:
 				using_pointer_input = true
 		
+		# Update end level button visibility in GameplayUI
+		update_end_level_button_visibility()
+
+func set_initial_input_method(global_method):
+	"""Set initial input method based on last menu interaction"""
+	# Reset lock timer completely for seamless transition
+	input_method_lock_timer = 0.0
+	
+	# Convert global input method to level input method and bypass lock for seamless transition
+	match global_method:
+		0: # KEYBOARD
+			set_input_method(InputMethod.KEYBOARD, true)
+		1: # MOUSE  
+			set_input_method(InputMethod.MOUSE, true)
+		2: # GAMEPAD
+			set_input_method(InputMethod.GAMEPAD, true)
+		3: # TOUCH
+			set_input_method(InputMethod.TOUCH, true)
+		_:
+			# Default to keyboard
+			set_input_method(InputMethod.KEYBOARD, true)
+
+func update_end_level_button_visibility():
+	"""Update the end level button visibility based on current input method"""
+	# Safety check - ensure we're in the scene tree
+	if not get_tree():
+		return
+	
+	# Get the Main scene and its GameplayUI
+	var main_scene = get_tree().get_first_node_in_group("main")
+	if not main_scene:
+		main_scene = get_node("/root/Main")
+	
+	if main_scene and main_scene.has_method("get_gameplay_ui"):
+		var gameplay_ui = main_scene.get_gameplay_ui()
+		if gameplay_ui and gameplay_ui.has_method("update_end_level_button_visibility"):
+			gameplay_ui.update_end_level_button_visibility(current_input_method == InputMethod.TOUCH)
 
 func end_level():
 	"""End the level and return to menu like original"""
@@ -1674,10 +1711,10 @@ func _handle_gamepad_input(button_index: int):
 	match button_index:
 		JOY_BUTTON_A:
 			check_button_press("A")  # A button = Ring type A
-		JOY_BUTTON_X:
-			check_button_press("B")  # X button = Ring type B
 		JOY_BUTTON_B:
-			check_button_press("C")  # B button = Ring type C
+			check_button_press("B")  # B button = Ring type B
+		JOY_BUTTON_X:
+			check_button_press("C")  # X button = Ring type C
 		JOY_BUTTON_Y:
 			check_button_press("D")  # Y button = Ring type D
 		JOY_BUTTON_RIGHT_SHOULDER:

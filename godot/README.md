@@ -31,8 +31,8 @@ MoonBunny is a 3D rhythm game where you control a bunny character flying through
 ### Ring Hitting
 #### Type-Specific Hitting (Keyboard/Gamepad)
 - **S Key / A Button**: Hit A rings (Blue)
-- **A Key / X Button**: Hit C rings (Red)
-- **D Key / B Button**: Hit B rings (Magenta)
+- **A Key / B Button**: Hit B rings (Magenta)
+- **D Key / X Button**: Hit C rings (Red)
 - **W Key / Y Button**: Hit D rings (Yellow/Green)
 
 #### Centralized Hitting (All Input Methods)

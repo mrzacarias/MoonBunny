@@ -334,6 +334,9 @@ func start_level():
 	if level_container:
 		level_container.add_child(current_level)
 	
+	# Set initial input method based on last menu interaction (after adding to tree)
+	current_level.set_initial_input_method(last_input_method)
+	
 	# Start level playback
 	current_level.play()
 
@@ -431,6 +434,10 @@ func set_last_input_method(method: GlobalInputMethod):
 func get_last_input_method() -> GlobalInputMethod:
 	"""Get the last used input method"""
 	return last_input_method
+
+func get_gameplay_ui():
+	"""Get the GameplayUI node"""
+	return gameplay_ui
 
 
 func _on_splash_finished():

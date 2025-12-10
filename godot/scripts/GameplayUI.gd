@@ -5,6 +5,7 @@ extends Control
 @onready var chain_label = $ChainLabel
 @onready var judgement_label = $JudgementLabel
 @onready var judgement_image = $JudgementImage
+@onready var end_level_button = $EndLevelButton
 
 # Animation
 var judgement_tween: Tween
@@ -24,6 +25,11 @@ func _ready():
 	# Set up judgement image
 	if judgement_image:
 		judgement_image.modulate = Color.TRANSPARENT  # Start invisible
+	
+	# Set up end level button
+	if end_level_button:
+		end_level_button.pressed.connect(_on_end_level_button_pressed)
+		end_level_button.visible = false  # Hidden by default
 
 func _on_score_updated(new_score: int):
 	score_label.text = "Score: " + str(new_score)
@@ -140,5 +146,22 @@ func create_2d_ring_particle(ring_type: String) -> TextureRect:
 	particle.pivot_offset = particle.size / 2
 	
 	return particle
+
+func update_end_level_button_visibility(is_touch_input: bool):
+	"""Show/hide end level button based on input method"""
+	if end_level_button:
+		end_level_button.visible = is_touch_input
+
+func _on_end_level_button_pressed():
+	"""Handle end level button press"""
+	# Get the Main scene and its current level
+	var main_scene = get_tree().get_first_node_in_group("main")
+	if not main_scene:
+		main_scene = get_node("/root/Main")
+	
+	if main_scene and main_scene.has_method("get") and main_scene.get("current_level"):
+		var level = main_scene.current_level
+		if level and level.has_method("end_level"):
+			level.end_level()
 
 # State management is now handled by Main.gd
